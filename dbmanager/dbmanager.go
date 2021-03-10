@@ -45,6 +45,25 @@ func (db *DBManager) VerifyUserExists(email string) error {
 	return nil
 }
 
+
+func (db *DBManager) GetUserPassHash(email string) ([]byte, error) {
+	err := db.VerifyUserExists(email)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := db.DB.Query(getUserPassQuery, email)
+	if err != nil{
+		return nil, err
+	}
+
+	rows.Next()
+	var hash []byte
+	rows.Scan(&hash)
+	return hash, nil
+}
+
+
 // Returns err if user is not added to DB
 func (db *DBManager) AddNewUser(email, password string) error {
 	err := db.VerifyUserExists(email)
