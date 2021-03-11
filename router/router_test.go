@@ -21,7 +21,7 @@ func TestLoginHandler(t *testing.T) {
 	}
 
 	for _, c := range cases {
-
+		// Create test request
 		bodyReader := strings.NewReader(`{"email":"` + c.email +
 			`","password":"` + c.pass +
 			`","csrf":"` + c.csrfB + `"}`)
@@ -31,16 +31,19 @@ func TestLoginHandler(t *testing.T) {
 		}
 		req.AddCookie(&http.Cookie{Name: "CSRF", Value: c.csrfC})
 
+		//Record test request through Login Handler
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(loginHandler)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
+		//Evaluate response for status code
 		if rr.Code != c.status {
 			t.Errorf("Handler returned wrong status code: got %v want %v. %v",
 				rr.Code, c.status, req)
 		}
 
+		//Evaluate response for cookies
 		if c.status == http.StatusOK {
 			cookies := response.Cookies()
 
@@ -49,6 +52,8 @@ func TestLoginHandler(t *testing.T) {
 					cookies[0].Name, cookies[0].Value, err)
 			}
 		}
+
+		//Evaluate response for security headers
 		for key, value := range secHeaders {
 			if response.Header.Get(key) != value {
 				t.Errorf("Response is missing headers %v, %v", key, value)
@@ -78,7 +83,7 @@ func TestLogoutHandler(t *testing.T) {
 	}
 
 	for _, c := range cases {
-
+		// Create test request
 		bodyReader := strings.NewReader(`{"csrf":"` + c.csrfB + `"}`)
 
 		req, err := http.NewRequest(c.method, c.path, bodyReader)
@@ -88,16 +93,19 @@ func TestLogoutHandler(t *testing.T) {
 		req.AddCookie(&http.Cookie{Name: "JWT", Value: c.jwt})
 		req.AddCookie(&http.Cookie{Name: "CSRF", Value: c.csrfC})
 
+		//Record test request through Logout Handler
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(logoutHandler)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
+		//Evaluate response for status code
 		if rr.Code != c.status {
 			t.Errorf("Handler returned wrong status code: got %v want %v. %v",
 				rr.Code, c.status, req)
 		}
 
+		//Evaluate response for security headers
 		for key, value := range secHeaders {
 			if response.Header.Get(key) != value {
 				t.Errorf("Response is missing headers %v, %v", key, value)
@@ -117,21 +125,24 @@ func TestCsrfHandler(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		// Create test request
 		req, err := http.NewRequest(c.method, c.path, nil)
 		if err != nil {
 			t.Errorf("Failed to make %v request %v", c.method, err)
 		}
 
+		//Record test request through CSRF Handler
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(csrfHandler)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
+		//Evaluate response for status code
 		if rr.Code != c.status {
 			t.Errorf("Handler returned wrong status code: got %v want %v",
 				rr.Code, http.StatusOK)
 		}
-
+		//Evaluate response for cookies
 		if c.status == http.StatusOK {
 			cookies := response.Cookies()
 
@@ -140,6 +151,7 @@ func TestCsrfHandler(t *testing.T) {
 					cookies[0].Name, cookies[0].Value, err)
 			}
 		}
+		//Evaluate response for security headers
 		for key, value := range secHeaders {
 			if response.Header.Get(key) != value {
 				t.Errorf("Response is missing headers %v, %v", key, value)
@@ -161,21 +173,23 @@ func TestRedirectTLS(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		// Create test request
 		req, err := http.NewRequest(c.method, c.path, nil)
 		if err != nil {
 			t.Errorf("Failed to make %v request %v", c.method, err)
 		}
-
+		//Record test request through redirect Handler
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(redirectTLS)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
+		//Evaluate response for status code
 		if rr.Code != c.status {
 			t.Errorf("Handler returned wrong status code: got %v want %v",
 				rr.Code, http.StatusOK)
 		}
-
+		//Evaluate response for security headers
 		for key, value := range secHeaders {
 			if response.Header.Get(key) != value {
 				t.Errorf("Response is missing headers %v, %v", key, value)
