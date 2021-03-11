@@ -13,6 +13,14 @@ import (
 var httpPort = ":8080"
 var httpsPort = ":9090"
 
+var secHeaders = map[string]string{
+	"Strict-Tarnsport-Security": "max-age=63072000; includeSubDomains;",
+	"Content-Security-Policy":   "default-src 'self'",
+	"X-Frame-Options":           "DENY",
+	"X-Content-Type-Options":    "nosniff",
+	"Cache-Control":             "no-store",
+}
+
 // Create a struct to read the email and pass from the request
 type Credentials struct {
 	Email    string `json:"email"`
@@ -21,7 +29,7 @@ type Credentials struct {
 }
 
 func Start(certPath, keyPath string) {
-	fmt.Printf("starting webserver \n")
+	fmt.Printf("Starting webserver ... \n")
 	//start listening for http to redirect to https
 	go http.ListenAndServe(httpPort, http.HandlerFunc(redirectTLS))
 	//start listening for https and handle requests
@@ -40,6 +48,8 @@ func handleRequests(certPath, keyPath string) {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received POST/login request")
+	addHeaders(w)
 	if r.Method != "POST" {
 		http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
 		return
@@ -75,6 +85,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	addHeaders(w)
+	log.Printf("Received POST/logout request")
 	if r.Method != "POST" {
 		http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
 		return
@@ -113,6 +125,8 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func csrfHandler(w http.ResponseWriter, r *http.Request) {
+	addHeaders(w)
+	log.Printf("Received GET/csrf request")
 	if r.Method != "GET" {
 		http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
 		return
@@ -133,27 +147,24 @@ func csrfHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func redirectTLS(w http.ResponseWriter, r *http.Request) {
-	// remove/add not default ports from req.Host
+	addHeaders(w)
 	host, _, _ := net.SplitHostPort(r.Host)
 	u := r.URL
 	u.Host = net.JoinHostPort(host, httpsPort[1:])
 	u.Scheme = "https"
 	target := u.String()
 
-	if len(r.URL.RawQuery) > 0 {
-		target += "?" + r.URL.RawQuery
-	}
-
 	log.Printf("redirect to: %s", target)
 	http.Redirect(w, r, target,
-		http.StatusTemporaryRedirect)
+		http.StatusPermanentRedirect)
 }
 
+// TODO: turn this into middleware:
 func validateCSRF(r *http.Request, creds Credentials) (string, int) {
 	csrfCookie, err := r.Cookie("CSRF")
 	if err != nil {
 		if err == http.ErrNoCookie {
-			return "Unauthorized Request - Bad CSRF", http.StatusUnauthorized
+			return "Unauthorized Request", http.StatusUnauthorized
 		}
 		return "Bad Request", http.StatusBadRequest
 	}
@@ -161,4 +172,11 @@ func validateCSRF(r *http.Request, creds Credentials) (string, int) {
 		return "Unauthorized Request", http.StatusUnauthorized
 	}
 	return "", 0
+}
+
+//TODO: turn this into middleware:
+func addHeaders(w http.ResponseWriter) {
+	for key, value := range secHeaders {
+		w.Header().Set(key, value)
+	}
 }
