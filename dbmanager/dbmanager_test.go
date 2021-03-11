@@ -55,14 +55,13 @@ func TestGetUserPassHash(t *testing.T) {
 }
 
 
-
 func TestAddNewUser(t *testing.T) {
 	// this tests that we cann't add the same email twice
 	cases := []struct {
 		email, pass string; exists bool
 	}{
 		{"user@gmail.com","newpass", true},
-		// {"101@gmail.com","greatpass", false},
+		{"101@gmail.com","greatpass", false},
 	}
 
 	for _, c := range cases {
