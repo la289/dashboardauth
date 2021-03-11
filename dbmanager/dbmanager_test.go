@@ -61,13 +61,13 @@ func TestAddNewUser(t *testing.T) {
 		exists      bool
 	}{
 		{"user@gmail.com", "newpass", true},
-		{"101@gmail.com", "greatpass", false},
+		{"102@gmail.com", "greatpass", false},
 	}
 
 	for _, c := range cases {
 		err := PSQL.AddNewUser(c.email, c.pass)
 		if (err == nil && c.exists) || (err != nil && !c.exists) {
-			t.Errorf("Add new user not working properly for: (email: %s - pass: %s)", c.email, c.pass)
+			t.Errorf("Add new user fails for: (email: %s - pass: %s). Error: %v", c.email, c.pass, err)
 		}
 	}
 }

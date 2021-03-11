@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	_ "github.com/lib/pq" //db driver for postgres
-	"iotdashboard/utils"
+	"golang.org/x/crypto/bcrypt"
+
 )
 
 //////// QUERIES
@@ -70,7 +71,7 @@ func (db *DBManager) AddNewUser(email, password string) error {
 		return err
 	}
 
-	hashedPass, err := utils.GeneratePassHash(password)
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		return err
 	}
