@@ -1,14 +1,13 @@
 package controller
 
-
-import(
-	"iotdashboard/dbmanager"
-	"github.com/dgrijalva/jwt-go"
+import (
 	"crypto/rand"
-	"time"
-	"iotdashboard/utils"
-	"errors"
 	"encoding/base64"
+	"errors"
+	"github.com/dgrijalva/jwt-go"
+	"iotdashboard/dbmanager"
+	"iotdashboard/utils"
+	"time"
 )
 
 //TODO: these probably shouldn't be global vars
@@ -32,14 +31,13 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	PSQL, err = dbmanager.New("postgres","myPassword","iot_dashboard")
+	PSQL, err = dbmanager.New("postgres", "myPassword", "iot_dashboard")
 	if err != nil {
 		panic(err)
 	}
 
 	blocklist = make(map[string]int64)
 }
-
 
 func Login(email, password string) (string, error) {
 	// use user struct instead of email and password?
@@ -62,12 +60,12 @@ func Login(email, password string) (string, error) {
 
 }
 
-func Logout(token string) error{
+func Logout(token string) error {
 	// validate CSRF
 
 	// validate JWT
 	exp, err := ValidateJWT(token)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	// blocklist JWT
@@ -75,8 +73,6 @@ func Logout(token string) error{
 	return nil
 
 }
-
-
 
 // returns an Error if the credentials are not valid
 func CheckUserCredentials(email, password string) error {
@@ -87,30 +83,26 @@ func CheckUserCredentials(email, password string) error {
 	return utils.CheckPassword(hash, password)
 }
 
-
 func CreateJWT(validPeriod int64) (string, error) {
-		claims := Claims{
-			NotBefore: time.Now().Unix(),
-			StandardClaims: jwt.StandardClaims{
-				// In JWT, the expiry time is expressed as unix milliseconds
-				ExpiresAt: time.Now().Add(time.Second * time.Duration(validPeriod)).Unix(),
-				Issuer: "iot-dash",
-			},
-		}
+	claims := Claims{
+		NotBefore: time.Now().Unix(),
+		StandardClaims: jwt.StandardClaims{
+			// In JWT, the expiry time is expressed as unix milliseconds
+			ExpiresAt: time.Now().Add(time.Second * time.Duration(validPeriod)).Unix(),
+			Issuer:    "iot-dash",
+		},
+	}
 
-		// Create the token
-		token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"),claims)
-		// token.Claims["exp"] =
-		// Sign and get the complete encoded token as a string
-		tokenString, err := token.SignedString(jwtKey)
-		if err != nil {
-			return "", err
-		}
-		return tokenString, nil
+	// Create the token
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
+	// token.Claims["exp"] =
+	// Sign and get the complete encoded token as a string
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }
-
-
-
 
 func ValidateJWT(rawToken string) (int64, error) {
 	exp, ok := blocklist[rawToken]
@@ -123,7 +115,7 @@ func ValidateJWT(rawToken string) (int64, error) {
 		func(rawToken *jwt.Token) (interface{}, error) {
 			return jwtKey, nil
 		})
-	if err != nil{
+	if err != nil {
 		return 0, err
 	}
 	// TODO: make this a subfunction so that validateJWT returns just the err
@@ -132,22 +124,20 @@ func ValidateJWT(rawToken string) (int64, error) {
 		return 0, errors.New("Couldn't Parse Token Claims")
 	}
 	now := time.Now().UTC().Unix()
-	if (claims.ExpiresAt < now || now < claims.NotBefore) {
+	if claims.ExpiresAt < now || now < claims.NotBefore {
 		return claims.ExpiresAt, ErrExpiredToken
 	}
 
 	return claims.ExpiresAt, nil
 }
 
-
-
 func GenerateRandomToken(n int) ([]byte, error) {
 	key := make([]byte, n)
-    _, err := rand.Read(key)
-    if err != nil {
-        return nil, err
-    }
-    // fmt.Println(key)
+	_, err := rand.Read(key)
+	if err != nil {
+		return nil, err
+	}
+	// fmt.Println(key)
 	return key, nil
 }
 

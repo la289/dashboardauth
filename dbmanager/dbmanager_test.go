@@ -7,12 +7,11 @@ import (
 var PSQL DBManager
 var PSQLerr error
 
-func init(){
-	PSQL, PSQLerr = New("postgres","myPassword","iot_dashboard")
+func init() {
+	PSQL, PSQLerr = New("postgres", "myPassword", "iot_dashboard")
 }
 
-
-func TestNewDBManager(t *testing.T){
+func TestNewDBManager(t *testing.T) {
 	//this inherently also tests ConnectToPSQL()
 	if PSQLerr != nil {
 		t.Errorf("Not Able to connect to database")
@@ -21,7 +20,8 @@ func TestNewDBManager(t *testing.T){
 
 func TestVerifyUserExists(t *testing.T) {
 	cases := []struct {
-		email string; exists bool
+		email  string
+		exists bool
 	}{
 		{"user@gmail.com", true},
 		{"1@gmail.com", false},
@@ -38,7 +38,8 @@ func TestVerifyUserExists(t *testing.T) {
 
 func TestGetUserPassHash(t *testing.T) {
 	cases := []struct {
-		email string; exists bool
+		email  string
+		exists bool
 	}{
 		{"user@gmail.com", true},
 		{"1000@doesntexist.com", false},
@@ -51,17 +52,16 @@ func TestGetUserPassHash(t *testing.T) {
 		}
 	}
 
-
 }
-
 
 func TestAddNewUser(t *testing.T) {
 	// this tests that we cann't add the same email twice
 	cases := []struct {
-		email, pass string; exists bool
+		email, pass string
+		exists      bool
 	}{
-		{"user@gmail.com","newpass", true},
-		{"101@gmail.com","greatpass", false},
+		{"user@gmail.com", "newpass", true},
+		{"101@gmail.com", "greatpass", false},
 	}
 
 	for _, c := range cases {
@@ -71,4 +71,3 @@ func TestAddNewUser(t *testing.T) {
 		}
 	}
 }
-

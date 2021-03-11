@@ -16,10 +16,10 @@ func TestGeneratePassHash(t *testing.T) {
 
 	for _, c := range cases {
 		hp, err := GeneratePassHash(c.pass)
-		if (string(hp[0:6]) != "$2a$10" || len(hp) != 60 || err != nil) {
-		t.Errorf("Password hashing failed: %s", hp)
+		if string(hp[0:6]) != "$2a$10" || len(hp) != 60 || err != nil {
+			t.Errorf("Password hashing failed: %s", hp)
 		}
-    }
+	}
 }
 
 func TestCheckPasswordPass(t *testing.T) {
@@ -55,7 +55,7 @@ func TestCheckPasswordFail(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		hp,err := GeneratePassHash(c.pass1)
+		hp, err := GeneratePassHash(c.pass1)
 		if err != nil {
 			t.Errorf("Generating password hash failed.")
 		}

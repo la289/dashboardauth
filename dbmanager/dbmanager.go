@@ -1,29 +1,28 @@
 package dbmanager
 
-import(
+import (
 	"database/sql"
-	_ "github.com/lib/pq" //db driver for postgres
-	"fmt"
-	"iotdashboard/utils"
 	"errors"
+	"fmt"
+	_ "github.com/lib/pq" //db driver for postgres
+	"iotdashboard/utils"
 )
 
 //////// QUERIES
 const (
-	userExistsQuery = `SELECT uid from users WHERE email = $1`
-	getUserInfoQuery      = `SELECT * from users WHERE email = $1`
-	getUserPassQuery      = `SELECT password from users WHERE email = $1`
-	createUserQuery = `INSERT INTO users(uid,email,password) VALUES (DEFAULT, $1 , $2);`
+	userExistsQuery  = `SELECT uid from users WHERE email = $1`
+	getUserInfoQuery = `SELECT * from users WHERE email = $1`
+	getUserPassQuery = `SELECT password from users WHERE email = $1`
+	createUserQuery  = `INSERT INTO users(uid,email,password) VALUES (DEFAULT, $1 , $2);`
 )
 
 //////// ERRORS
 var ErrUserNonexistant = errors.New("User does not exist")
-var ErrUserExists 	   = errors.New("User already exists")
+var ErrUserExists = errors.New("User already exists")
 
-
-type DBManager struct{
+type DBManager struct {
 	dbUser, dbPass, dbName string
-	DB *sql.DB
+	DB                     *sql.DB
 }
 
 func New(user, pass, name string) (DBManager, error) {
@@ -39,12 +38,11 @@ func (db *DBManager) VerifyUserExists(email string) error {
 		return err
 	}
 
-	if !rows.Next(){
-		return  ErrUserNonexistant
+	if !rows.Next() {
+		return ErrUserNonexistant
 	}
 	return nil
 }
-
 
 func (db *DBManager) GetUserPassHash(email string) ([]byte, error) {
 	err := db.VerifyUserExists(email)
@@ -53,7 +51,7 @@ func (db *DBManager) GetUserPassHash(email string) ([]byte, error) {
 	}
 
 	rows, err := db.DB.Query(getUserPassQuery, email)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -62,7 +60,6 @@ func (db *DBManager) GetUserPassHash(email string) ([]byte, error) {
 	rows.Scan(&hash)
 	return hash, nil
 }
-
 
 // Returns err if user is not added to DB
 func (db *DBManager) AddNewUser(email, password string) error {
@@ -74,7 +71,7 @@ func (db *DBManager) AddNewUser(email, password string) error {
 	}
 
 	hashedPass, err := utils.GeneratePassHash(password)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -85,11 +82,10 @@ func (db *DBManager) AddNewUser(email, password string) error {
 	return nil
 }
 
-
 // Returns an error if the connection is not made
 func (db *DBManager) connectToPSQL() error {
 	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-            db.dbUser, db.dbPass, db.dbName)
+		db.dbUser, db.dbPass, db.dbName)
 	psql, err := sql.Open("postgres", dbinfo)
 
 	if err != nil {
@@ -117,5 +113,3 @@ func (db *DBManager) createAccountsTable() error {
 	)
 	return err
 }
-
-

@@ -1,6 +1,6 @@
 package utils
 
-import(
+import (
 	"golang.org/x/crypto/bcrypt"
 )
 
