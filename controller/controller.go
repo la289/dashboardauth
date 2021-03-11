@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"iotdashboard/dbmanager"
-	"iotdashboard/utils"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -80,7 +80,7 @@ func CheckUserCredentials(email, password string) error {
 	if err != nil {
 		return err
 	}
-	return utils.CheckPassword(hash, password)
+	return bcrypt.CompareHashAndPassword(hash, []byte(password))
 }
 
 func CreateJWT(validPeriod int64) (string, error) {
