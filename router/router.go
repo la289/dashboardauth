@@ -19,6 +19,7 @@ var secHeaders = map[string]string{
 	"X-Frame-Options":           "DENY",
 	"X-Content-Type-Options":    "nosniff",
 	"Cache-Control":             "no-store",
+	"Access-Control-Allow-Origin": "*", //TODO: remove this. Only used for dev while react is served from different spot
 }
 
 // Create a struct to read the email and pass from the request
@@ -80,7 +81,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		Value:    jwt,
 		Secure:   true,
 		HttpOnly: true,
-		SameSite: 3,
+		SameSite: http.SameSiteStrict,
 	})
 }
 
@@ -142,7 +143,7 @@ func csrfHandler(w http.ResponseWriter, r *http.Request) {
 		Name:     "CSRF",
 		Value:    csrf,
 		Secure:   true,
-		SameSite: 3,
+		SameSite: http.SameSiteStrict,
 	})
 }
 

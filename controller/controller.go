@@ -93,9 +93,8 @@ func CreateJWT(validPeriod int64) (string, error) {
 		},
 	}
 
-	// Create the token
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
-	// token.Claims["exp"] =
+
 	// Sign and get the complete encoded token as a string
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {

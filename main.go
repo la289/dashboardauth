@@ -2,11 +2,7 @@ package main
 
 import (
 	"iotdashboard/router"
-	// "iotdashboard/controller"
 )
-
-func init() {
-}
 
 func main() {
 
