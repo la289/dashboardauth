@@ -9,9 +9,6 @@ import (
 
 )
 
-
-
-//////// ERRORS
 var ErrUserNonexistant = errors.New("User does not exist")
 
 type DBManager struct {

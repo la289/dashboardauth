@@ -20,7 +20,7 @@ func TestGenerateRandomString(t *testing.T) {
 	}
 	n := 5
 	s, err := tu.GenerateRandomString(n)
-	if err != nil || len(s) < n {
+	if (err != nil || len(s) != n) {
 		t.Errorf("The signing key is wrong: %s", s)
 	}
 }
@@ -47,6 +47,7 @@ func TestCreateAndGetJWTExpiry(t *testing.T) {
 		t.Errorf("Validation succeeded when it should have failed")
 	}
 	//test expiration of token
+	//TODO: Replace time.sleep with https://github.com/jonboulle/clockwork
 	time.Sleep(3 * time.Second)
 	_, err = tu.GetJWTExpiry(token)
 	if err == nil {

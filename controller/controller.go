@@ -5,23 +5,23 @@ import (
 	"iotdashboard/utils"
 )
 
-type Controller struct {
+type ControllerService struct {
 	psql   dbmanager.DBManager
 	TokenUtil utils.TokenUtil
   }
 
-func NewController() (Controller, error) {
+func NewController() (ControllerService, error) {
 	PSQL, err := dbmanager.New("postgres", "myPassword", "iot_dashboard")
 	if err != nil {
-		return Controller{}, err
+		return ControllerService{}, err
 	}
 	TokenUtil, err := utils.NewTokenUtil()
 
-	return Controller{PSQL, TokenUtil}, nil
+	return ControllerService{PSQL, TokenUtil}, nil
 }
 
 
-func (ct *Controller) Login(email, password string) (string, error) {
+func (ct *ControllerService) Login(email, password string) (string, error) {
 	// validate basic auth
 	err := ct.psql.CheckUserCredentials(email, password)
 	if err != nil {
@@ -35,10 +35,9 @@ func (ct *Controller) Login(email, password string) (string, error) {
 		return "", err
 	}
 	return token, nil
-
 }
 
-func (ct *Controller) Logout(token string) error {
+func (ct *ControllerService) Logout(token string) error {
 	// validate CSRF
 
 	// validate JWT

@@ -8,7 +8,7 @@ import (
 )
 
 func TestLoginHandler(t *testing.T) {
-	Router,err := NewRouter(":8080",":9090")
+	router,err := NewRouter(":8080",":9090")
 	if err != nil{
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
@@ -37,7 +37,7 @@ func TestLoginHandler(t *testing.T) {
 
 		//Record test request through Login Handler
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(Router.loginHandler)
+		handler := http.HandlerFunc(router.loginHandler)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
@@ -58,7 +58,7 @@ func TestLoginHandler(t *testing.T) {
 		}
 
 		//Evaluate response for security headers
-		for key, value := range Router.getSecHeaders() {
+		for key, value := range router.getSecHeaders() {
 			if response.Header.Get(key) != value {
 				t.Errorf("Response is missing headers %v, %v", key, value)
 			}
@@ -67,13 +67,13 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func TestLogoutHandler(t *testing.T) {
-	Router,err := NewRouter(":8080",":9090")
+	router,err := NewRouter(":8080",":9090")
 	if err != nil{
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
 
-	token1, err1 := Router.ctrlr.TokenUtil.CreateJWT(60)
-	token2, err2 := Router.ctrlr.TokenUtil.CreateJWT(60)
+	token1, err1 := router.ctrlr.TokenUtil.CreateJWT(60)
+	token2, err2 := router.ctrlr.TokenUtil.CreateJWT(60)
 	if (err1 != nil || err2 != nil) {
 		t.Errorf("Failed to generate a token. Errors: \n %v \n %v \n", err1, err2 )
 	}
@@ -102,7 +102,7 @@ func TestLogoutHandler(t *testing.T) {
 
 		//Record test request through Logout Handler
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(Router.logoutHandler)
+		handler := http.HandlerFunc(router.logoutHandler)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
@@ -113,7 +113,7 @@ func TestLogoutHandler(t *testing.T) {
 		}
 
 		//Evaluate response for security headers
-		for key, value := range Router.getSecHeaders() {
+		for key, value := range router.getSecHeaders() {
 			if response.Header.Get(key) != value {
 				t.Errorf("Response is missing headers %v, %v \n", key, value)
 			}
@@ -122,7 +122,7 @@ func TestLogoutHandler(t *testing.T) {
 }
 
 func TestCsrfHandler(t *testing.T) {
-	Router,err := NewRouter(":8080",":9090")
+	router,err := NewRouter(":8080",":9090")
 	if err != nil{
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
@@ -145,7 +145,7 @@ func TestCsrfHandler(t *testing.T) {
 
 		//Record test request through CSRF Handler
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(Router.csrfHandler)
+		handler := http.HandlerFunc(router.csrfHandler)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
@@ -164,7 +164,7 @@ func TestCsrfHandler(t *testing.T) {
 			}
 		}
 		//Evaluate response for security headers
-		for key, value := range Router.getSecHeaders() {
+		for key, value := range router.getSecHeaders() {
 			if response.Header.Get(key) != value {
 				t.Errorf("Response is missing headers %v, %v \n", key, value)
 			}
@@ -175,7 +175,7 @@ func TestCsrfHandler(t *testing.T) {
 // func TestValidateCSRF(t *testing.T){} -> validated through request handler testing
 
 func TestRedirectTLS(t *testing.T) {
-	Router,err := NewRouter(":8080",":9090")
+	router,err := NewRouter(":8080",":9090")
 	if err != nil{
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
@@ -197,7 +197,7 @@ func TestRedirectTLS(t *testing.T) {
 		}
 		//Record test request through redirect Handler
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(Router.redirectTLS)
+		handler := http.HandlerFunc(router.redirectTLS)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
@@ -213,7 +213,7 @@ func TestRedirectTLS(t *testing.T) {
 		}
 
 		//Evaluate response for security headers
-		for key, value := range Router.getSecHeaders() {
+		for key, value := range router.getSecHeaders() {
 			if response.Header.Get(key) != value {
 				t.Errorf("Response is missing headers %v, %v \n", key, value)
 			}

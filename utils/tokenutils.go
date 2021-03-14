@@ -6,6 +6,7 @@ import(
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"time"
+	"sync"
 )
 
 type Claims struct {
@@ -16,7 +17,7 @@ type Claims struct {
 type TokenUtil struct{
 	jwtKey []byte
 	// blocklist key is the JWT and the value is the expiration epoch time
-	blocklist map[string]time.Time
+	blocklist *sync.Map
 }
 
 var ErrExpiredToken = errors.New("Token is expired")
@@ -26,8 +27,7 @@ func NewTokenUtil() (TokenUtil, error) {
 	if err != nil {
 		return TokenUtil{}, err
 	}
-	blocklist := make(map[string]time.Time)
-	return TokenUtil{jwtKey, blocklist}, nil
+	return TokenUtil{jwtKey, new(sync.Map)}, nil
 }
 
 func (tu *TokenUtil) CreateJWT(validPeriod time.Duration) (string, error) {
@@ -51,9 +51,9 @@ func (tu *TokenUtil) CreateJWT(validPeriod time.Duration) (string, error) {
 }
 
 func (tu *TokenUtil) GetJWTExpiry(rawToken string) (time.Time, error) {
-	exp, ok := tu.blocklist[rawToken]
+	exp, ok := tu.blocklist.Load(rawToken)
 	if ok {
-		return exp, ErrExpiredToken
+		return exp.(time.Time), ErrExpiredToken
 	}
 	token, err := jwt.ParseWithClaims(
 		rawToken,
@@ -80,12 +80,12 @@ func (tu *TokenUtil) GetJWTExpiry(rawToken string) (time.Time, error) {
 }
 
 func (tu *TokenUtil) BlockListToken(jwt string, expiration time.Time) {
-	tu.blocklist[jwt] = expiration
+	tu.blocklist.Store(jwt, expiration)
 }
 
 func (tu *TokenUtil) GenerateRandomString(n int) (string, error) {
 	s, err := GenerateRandomToken(n)
-	return base64.URLEncoding.EncodeToString(s), err
+	return base64.URLEncoding.EncodeToString(s)[:n], err
 }
 
 func  GenerateRandomToken(n int) ([]byte, error) {

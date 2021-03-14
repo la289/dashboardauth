@@ -1,26 +1,17 @@
-package dbmanager_test
+package dbmanager
 
 import (
 	"testing"
-	"iotdashboard/dbmanager"
 )
 
-var PSQL dbmanager.DBManager
-var PSQLerr error
-
-func init() {
-	PSQL, PSQLerr = dbmanager.New("postgres", "myPassword", "iot_dashboard")
-}
-
-func TestNewDBManager(t *testing.T) {
-	//this inherently also tests ConnectToPSQL()
-	if PSQLerr != nil {
-		t.Errorf("Not Able to connect to database")
-	}
-}
 
 // TestCheckUserCredentials inherently also tests getPasswordHash
 func TestCheckUserCredentials(t *testing.T) {
+	PSQL, err := New("postgres", "myPassword", "iot_dashboard")
+	if err != nil{
+		t.Errorf("Unable to initialize DB Manager: %v \n", err)
+	}
+
 	cases := []struct {
 		email, pass string
 		exists      bool
@@ -40,6 +31,11 @@ func TestCheckUserCredentials(t *testing.T) {
 
 func TestAddNewUser(t *testing.T) {
 	// this tests that we cann't add the same email twice
+	PSQL, err := New("postgres", "myPassword", "iot_dashboard")
+	if err != nil{
+		t.Errorf("Unable to initialize DB Manager: %v \n", err)
+	}
+
 	cases := []struct {
 		email, pass string
 		exists      bool
