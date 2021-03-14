@@ -9,48 +9,62 @@ import (
 	"net/http"
 )
 
-//TODO: maybe these ports should live in a config file?
-var httpPort = ":8080"
-var httpsPort = ":9090"
+const defaultHTTPport  = ":8080"
+const defaultHTTPSport  = ":9090"
 
-var secHeaders = map[string]string{
-	"Strict-Tarnsport-Security": "max-age=63072000; includeSubDomains;",
-	"Content-Security-Policy":   "default-src 'self'",
-	"X-Frame-Options":           "DENY",
-	"X-Content-Type-Options":    "nosniff",
-	"Cache-Control":             "no-store",
-	"Access-Control-Allow-Origin": "*", //TODO: remove this. Only used for dev while react is served from different spot
+
+type Router struct{
+	ctrlr controller.Controller
+	httpPort string
+	httpsPort string
 }
 
-// Create a struct to read the email and pass from the request
+// Credentials is a struct that holds the email, password, and CSRF token of a request
 type Credentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	CSRF     string `json:"csrf"`
 }
 
-func Start(certPath, keyPath string) {
-	fmt.Printf("Starting webserver ... \n")
-	//start listening for http to redirect to https
-	go http.ListenAndServe(httpPort, http.HandlerFunc(redirectTLS))
-	//start listening for https and handle requests
-	handleRequests(certPath, keyPath)
+func NewRouter(httpPort, httpsPort string) (Router, error) {
+	ctrlr,err := controller.NewController()
+	if err != nil{
+		return Router{}, err
+	}
+	return Router{ctrlr, httpPort, httpsPort}, nil
 }
 
-func handleRequests(certPath, keyPath string) {
+func (rtr *Router) Start(certPath, keyPath string) error {
+	fmt.Printf("Starting webserver ... \n")
+	//start listening for http to redirect to https
+	go http.ListenAndServe(rtr.httpPort, http.HandlerFunc(rtr.redirectTLS))
+
+	//start listening for https and handle requests
+	err := rtr.handleRequests(certPath, keyPath)
+	if err != nil{
+		return err
+	}
+	return nil
+}
+
+func (rtr *Router) handleRequests(certPath, keyPath string) error {
 	mux := http.NewServeMux()
 	//TODO: move the finished react code into a local folder
 	mux.Handle("/", http.FileServer(http.Dir("../../../frontend-root/iot-dashboard/build/")))
-	mux.HandleFunc("/login", loginHandler)
-	mux.HandleFunc("/logout", logoutHandler)
-	mux.HandleFunc("/csrf", csrfHandler)
+	mux.HandleFunc("/login", rtr.loginHandler)
+	mux.HandleFunc("/logout", rtr.logoutHandler)
+	mux.HandleFunc("/csrf", rtr.csrfHandler)
 
-	log.Fatal(http.ListenAndServeTLS(httpsPort, certPath, keyPath, mux))
+	err := http.ListenAndServeTLS(rtr.httpsPort, certPath, keyPath, mux)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func loginHandler(w http.ResponseWriter, r *http.Request) {
+func (rtr *Router) loginHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Received POST/login request")
-	addHeaders(w)
+	rtr.addHeaders(w)
 	if r.Method != "POST" {
 		http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
 		return
@@ -64,14 +78,14 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// CSRF Validation
-	errMsg, errCode := validateCSRF(r, creds)
+	errMsg, errCode := rtr.validateCSRF(r, creds)
 	if errCode != 0 {
 		http.Error(w, errMsg, errCode)
 		return
 	}
 
 	//Perform Login
-	jwt, err := controller.Login(creds.Email, creds.Password)
+	jwt, err := rtr.ctrlr.Login(creds.Email, creds.Password)
 	if err != nil {
 		http.Error(w, "Email and Password do not match", http.StatusUnauthorized)
 		return
@@ -81,12 +95,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		Value:    jwt,
 		Secure:   true,
 		HttpOnly: true,
-		SameSite: http.SameSiteStrict,
+		SameSite: http.SameSiteStrictMode,
 	})
 }
 
-func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	addHeaders(w)
+func (rtr *Router) logoutHandler(w http.ResponseWriter, r *http.Request) {
+	rtr.addHeaders(w)
 	log.Printf("Received POST/logout request")
 	if r.Method != "POST" {
 		http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
@@ -102,7 +116,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// CSRF Validation
-	errMsg, errCode := validateCSRF(r, creds)
+	errMsg, errCode := rtr.validateCSRF(r, creds)
 	if errCode != 0 {
 		http.Error(w, errMsg, errCode)
 		return
@@ -118,15 +132,15 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = controller.Logout(jwtCookie.Value)
+	err = rtr.ctrlr.Logout(jwtCookie.Value)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 }
 
-func csrfHandler(w http.ResponseWriter, r *http.Request) {
-	addHeaders(w)
+func (rtr *Router) csrfHandler(w http.ResponseWriter, r *http.Request) {
+	rtr.addHeaders(w)
 	log.Printf("Received GET/csrf request")
 	if r.Method != "GET" {
 		http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
@@ -134,7 +148,7 @@ func csrfHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// Get the JSON body and decode into credentials
 
-	csrf, err := controller.GenerateRandomString(128)
+	csrf, err := rtr.ctrlr.TokenUtil.GenerateRandomString(128)
 	if err != nil {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
@@ -143,15 +157,15 @@ func csrfHandler(w http.ResponseWriter, r *http.Request) {
 		Name:     "CSRF",
 		Value:    csrf,
 		Secure:   true,
-		SameSite: http.SameSiteStrict,
+		SameSite: http.SameSiteStrictMode,
 	})
 }
 
-func redirectTLS(w http.ResponseWriter, r *http.Request) {
-	addHeaders(w)
+func (rtr *Router) redirectTLS(w http.ResponseWriter, r *http.Request) {
+	rtr.addHeaders(w)
 	host, _, _ := net.SplitHostPort(r.Host)
 	u := r.URL
-	u.Host = net.JoinHostPort(host, httpsPort[1:])
+	u.Host = net.JoinHostPort(host, defaultHTTPSport [1:])
 	u.Scheme = "https"
 	target := u.String()
 
@@ -161,7 +175,7 @@ func redirectTLS(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO: turn this into middleware:
-func validateCSRF(r *http.Request, creds Credentials) (string, int) {
+func (rtr *Router) validateCSRF(r *http.Request, creds Credentials) (string, int) {
 	csrfCookie, err := r.Cookie("CSRF")
 	if err != nil {
 		if err == http.ErrNoCookie {
@@ -176,8 +190,20 @@ func validateCSRF(r *http.Request, creds Credentials) (string, int) {
 }
 
 //TODO: turn this into middleware:
-func addHeaders(w http.ResponseWriter) {
-	for key, value := range secHeaders {
+func (rtr *Router) addHeaders(w http.ResponseWriter) {
+	for key, value := range rtr.getSecHeaders() {
 		w.Header().Set(key, value)
+	}
+}
+
+
+func (rtr *Router) getSecHeaders() map[string]string {
+	return map[string]string{
+		"Strict-Tarnsport-Security": "max-age=63072000; includeSubDomains;",
+		"Content-Security-Policy":   "default-src 'self'",
+		"X-Frame-Options":           "DENY",
+		"X-Content-Type-Options":    "nosniff",
+		"Cache-Control":             "no-store",
+		"Access-Control-Allow-Origin": "*", //TODO: remove this. Only used for dev while react is served from different spot
 	}
 }

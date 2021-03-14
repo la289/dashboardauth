@@ -9,17 +9,10 @@ import (
 
 )
 
-//////// QUERIES
-const (
-	userExistsQuery  = `SELECT uid from users WHERE email = $1`
-	getUserInfoQuery = `SELECT * from users WHERE email = $1`
-	getUserPassQuery = `SELECT password from users WHERE email = $1`
-	createUserQuery  = `INSERT INTO users(uid,email,password) VALUES (DEFAULT, $1 , $2);`
-)
+
 
 //////// ERRORS
 var ErrUserNonexistant = errors.New("User does not exist")
-var ErrUserExists = errors.New("User already exists")
 
 type DBManager struct {
 	dbUser, dbPass, dbName string
@@ -32,51 +25,49 @@ func New(user, pass, name string) (DBManager, error) {
 	return d, err
 }
 
-// VerifyUserExists returns an error if the user does not exist
-func (db *DBManager) VerifyUserExists(email string) error {
-	rows, err := db.DB.Query(userExistsQuery, email)
-	if err != nil {
-		return err
-	}
-
-	if !rows.Next() {
-		return ErrUserNonexistant
-	}
-	return nil
-}
-
-func (db *DBManager) GetUserPassHash(email string) ([]byte, error) {
-	err := db.VerifyUserExists(email)
+func (db *DBManager) getPasswordHash(email string) ([]byte, error) {
+	rows, err := db.DB.Query(`SELECT password from users WHERE email = $1`, email)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := db.DB.Query(getUserPassQuery, email)
-	if err != nil {
+	hasNextRow := rows.Next()
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-
-	rows.Next()
+	if !hasNextRow {
+		return nil, ErrUserNonexistant
+	}
 	var hash []byte
-	rows.Scan(&hash)
+	if err = rows.Scan(&hash); err != nil {
+		return nil, err
+	}
+	if len(hash) != 60 {
+		return nil, ErrUserNonexistant
+	}
+
 	return hash, nil
 }
 
-// Returns err if user is not added to DB
-func (db *DBManager) AddNewUser(email, password string) error {
-	err := db.VerifyUserExists(email)
-	if err == nil { //TODO this needs to check for the exact error, otherwise return the error. Need errors to be better defined
-		return ErrUserExists
-	} else if err != ErrUserNonexistant {
+
+// returns an Error if the credentials are not valid
+func (db *DBManager) CheckUserCredentials(email, password string) error {
+	hash, err := db.getPasswordHash(email)
+	if err != nil {
 		return err
 	}
+	return bcrypt.CompareHashAndPassword(hash, []byte(password))
+}
 
+
+// Returns err if user is not added to DB
+func (db *DBManager) AddNewUser(email, password string) error {
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.DB.Query(createUserQuery, email, hashedPass)
+	_, err = db.DB.Query(`INSERT INTO users(email,password) VALUES ($1 , $2);`, email, hashedPass)
 	if err != nil {
 		return err
 	}
@@ -95,7 +86,7 @@ func (db *DBManager) connectToPSQL() error {
 	db.DB = psql
 	// only creates the table if it doesn't already exist
 	// Typically this database would exist on its own outside of docker
-	err = db.createAccountsTable()
+	err = db.initSchemaUsers()
 	if err != nil {
 		return err
 	}
@@ -103,7 +94,7 @@ func (db *DBManager) connectToPSQL() error {
 	return nil
 }
 
-func (db *DBManager) createAccountsTable() error {
+func (db *DBManager) initSchemaUsers() error {
 	_, err := db.DB.Query(`
 		CREATE TABLE IF NOT EXISTS users(
 			 uid serial PRIMARY KEY,

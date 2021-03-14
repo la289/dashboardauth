@@ -1,7 +1,6 @@
 package router
 
 import (
-	"iotdashboard/controller"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,6 +8,11 @@ import (
 )
 
 func TestLoginHandler(t *testing.T) {
+	Router,err := NewRouter(":8080",":9090")
+	if err != nil{
+		t.Errorf("Could not initialize router: %v \n", err)
+	}
+
 	cases := []struct {
 		method, path, email, pass, csrfC, csrfB string
 		status                                  int
@@ -33,7 +37,7 @@ func TestLoginHandler(t *testing.T) {
 
 		//Record test request through Login Handler
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(loginHandler)
+		handler := http.HandlerFunc(Router.loginHandler)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
@@ -54,7 +58,7 @@ func TestLoginHandler(t *testing.T) {
 		}
 
 		//Evaluate response for security headers
-		for key, value := range secHeaders {
+		for key, value := range Router.getSecHeaders() {
 			if response.Header.Get(key) != value {
 				t.Errorf("Response is missing headers %v, %v", key, value)
 			}
@@ -63,12 +67,15 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func TestLogoutHandler(t *testing.T) {
-	token1, err := controller.CreateJWT(60)
-	token2, err := controller.CreateJWT(60)
+	Router,err := NewRouter(":8080",":9090")
+	if err != nil{
+		t.Errorf("Could not initialize router: %v \n", err)
+	}
 
-	if err != nil {
-		t.Errorf("Failed to generate a token: %v", err)
-
+	token1, err1 := Router.ctrlr.TokenUtil.CreateJWT(60)
+	token2, err2 := Router.ctrlr.TokenUtil.CreateJWT(60)
+	if (err1 != nil || err2 != nil) {
+		t.Errorf("Failed to generate a token. Errors: \n %v \n %v \n", err1, err2 )
 	}
 	cases := []struct {
 		method, path, jwt, csrfC, csrfB string
@@ -88,33 +95,38 @@ func TestLogoutHandler(t *testing.T) {
 
 		req, err := http.NewRequest(c.method, c.path, bodyReader)
 		if err != nil {
-			t.Errorf("Failed to make %v request %v", c.method, err)
+			t.Errorf("Failed to make %v request %v \n", c.method, err)
 		}
 		req.AddCookie(&http.Cookie{Name: "JWT", Value: c.jwt})
 		req.AddCookie(&http.Cookie{Name: "CSRF", Value: c.csrfC})
 
 		//Record test request through Logout Handler
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(logoutHandler)
+		handler := http.HandlerFunc(Router.logoutHandler)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
 		//Evaluate response for status code
 		if rr.Code != c.status {
-			t.Errorf("Handler returned wrong status code: got %v want %v. %v",
+			t.Errorf("Handler returned wrong status code: got %v want %v. %v \n",
 				rr.Code, c.status, req)
 		}
 
 		//Evaluate response for security headers
-		for key, value := range secHeaders {
+		for key, value := range Router.getSecHeaders() {
 			if response.Header.Get(key) != value {
-				t.Errorf("Response is missing headers %v, %v", key, value)
+				t.Errorf("Response is missing headers %v, %v \n", key, value)
 			}
 		}
 	}
 }
 
 func TestCsrfHandler(t *testing.T) {
+	Router,err := NewRouter(":8080",":9090")
+	if err != nil{
+		t.Errorf("Could not initialize router: %v \n", err)
+	}
+
 	cases := []struct {
 		method, path string
 		status       int
@@ -128,18 +140,18 @@ func TestCsrfHandler(t *testing.T) {
 		// Create test request
 		req, err := http.NewRequest(c.method, c.path, nil)
 		if err != nil {
-			t.Errorf("Failed to make %v request %v", c.method, err)
+			t.Errorf("Failed to make %v request %v \n", c.method, err)
 		}
 
 		//Record test request through CSRF Handler
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(csrfHandler)
+		handler := http.HandlerFunc(Router.csrfHandler)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
 		//Evaluate response for status code
 		if rr.Code != c.status {
-			t.Errorf("Handler returned wrong status code: got %v want %v",
+			t.Errorf("Handler returned wrong status code: got %v want %v \n",
 				rr.Code, http.StatusOK)
 		}
 		//Evaluate response for cookies
@@ -147,14 +159,14 @@ func TestCsrfHandler(t *testing.T) {
 			cookies := response.Cookies()
 
 			if cookies[0].Name != "CSRF" {
-				t.Errorf("Handler returned unexpected token: got %v = %v with error: %v",
+				t.Errorf("Handler returned unexpected token: got %v = %v with error: %v \n",
 					cookies[0].Name, cookies[0].Value, err)
 			}
 		}
 		//Evaluate response for security headers
-		for key, value := range secHeaders {
+		for key, value := range Router.getSecHeaders() {
 			if response.Header.Get(key) != value {
-				t.Errorf("Response is missing headers %v, %v", key, value)
+				t.Errorf("Response is missing headers %v, %v \n", key, value)
 			}
 		}
 	}
@@ -163,36 +175,47 @@ func TestCsrfHandler(t *testing.T) {
 // func TestValidateCSRF(t *testing.T){} -> validated through request handler testing
 
 func TestRedirectTLS(t *testing.T) {
+	Router,err := NewRouter(":8080",":9090")
+	if err != nil{
+		t.Errorf("Could not initialize router: %v \n", err)
+	}
+
 	cases := []struct {
-		method, path string
+		method, path, newPath string
 		status       int
 	}{
-		{"GET", "/", http.StatusPermanentRedirect},
-		{"POST", "/login", http.StatusPermanentRedirect},
-		{"GET", "/csrf?123", http.StatusPermanentRedirect},
+		{"GET", "http://192.0.0.1:8080", "https://192.0.0.1:9090", http.StatusPermanentRedirect},
+		{"POST", "http://192.0.0.1:8080/login", "https://192.0.0.1:9090/login", http.StatusPermanentRedirect},
+		{"GET", "http://192.1.1.1:8080/csrf?123", "https://192.1.1.1:9090/csrf?123", http.StatusPermanentRedirect},
 	}
 
 	for _, c := range cases {
 		// Create test request
 		req, err := http.NewRequest(c.method, c.path, nil)
 		if err != nil {
-			t.Errorf("Failed to make %v request %v", c.method, err)
+			t.Errorf("Failed to make %v request %v \n", c.method, err)
 		}
 		//Record test request through redirect Handler
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(redirectTLS)
+		handler := http.HandlerFunc(Router.redirectTLS)
 		handler.ServeHTTP(rr, req)
 		response := rr.Result()
 
 		//Evaluate response for status code
 		if rr.Code != c.status {
-			t.Errorf("Handler returned wrong status code: got %v want %v",
+			t.Errorf("Handler returned wrong status code: got %v want %v \n",
 				rr.Code, http.StatusOK)
 		}
+		//Evaluate redirect url
+		redirectURL, err := response.Location()
+		if (redirectURL.String() != c.newPath || err != nil) {
+			t.Errorf("Expected URL: %v - Received URL: %v \n", c.newPath, redirectURL)
+		}
+
 		//Evaluate response for security headers
-		for key, value := range secHeaders {
+		for key, value := range Router.getSecHeaders() {
 			if response.Header.Get(key) != value {
-				t.Errorf("Response is missing headers %v, %v", key, value)
+				t.Errorf("Response is missing headers %v, %v \n", key, value)
 			}
 		}
 	}

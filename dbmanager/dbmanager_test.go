@@ -1,14 +1,15 @@
-package dbmanager
+package dbmanager_test
 
 import (
 	"testing"
+	"iotdashboard/dbmanager"
 )
 
-var PSQL DBManager
+var PSQL dbmanager.DBManager
 var PSQLerr error
 
 func init() {
-	PSQL, PSQLerr = New("postgres", "myPassword", "iot_dashboard")
+	PSQL, PSQLerr = dbmanager.New("postgres", "myPassword", "iot_dashboard")
 }
 
 func TestNewDBManager(t *testing.T) {
@@ -18,40 +19,23 @@ func TestNewDBManager(t *testing.T) {
 	}
 }
 
-func TestVerifyUserExists(t *testing.T) {
+// TestCheckUserCredentials inherently also tests getPasswordHash
+func TestCheckUserCredentials(t *testing.T) {
 	cases := []struct {
-		email  string
-		exists bool
+		email, pass string
+		exists      bool
 	}{
-		{"user@gmail.com", true},
-		{"1@gmail.com", false},
-		{"", false},
+		{"user@gmail.com", "S3cure3Pa$$", true},
+		{"user@gmail.com", "wrongpass", false},
+		{"1000@doesntexist.com", "bloop", false},
 	}
 
 	for _, c := range cases {
-		err := PSQL.VerifyUserExists(c.email)
-		if (err == nil && !c.exists) || (err != nil && c.exists) {
-			t.Errorf("user %s exists is returning the wrong result", c.email)
+		err := PSQL.CheckUserCredentials(c.email, c.pass)
+		if (err != nil && c.exists) || (err == nil && !c.exists) {
+			t.Errorf("User credential validation failed (email: %s - pass: %s). Error: %v", c.email, c.pass, err)
 		}
 	}
-}
-
-func TestGetUserPassHash(t *testing.T) {
-	cases := []struct {
-		email  string
-		exists bool
-	}{
-		{"user@gmail.com", true},
-		{"1000@doesntexist.com", false},
-	}
-
-	for _, c := range cases {
-		hash, err := PSQL.GetUserPassHash(c.email)
-		if (err != nil && c.exists && len(hash) != 60) || (err == nil && !c.exists) {
-			t.Errorf("GetUserPassHash is failing for (email: %s)", c.email)
-		}
-	}
-
 }
 
 func TestAddNewUser(t *testing.T) {
@@ -61,7 +45,7 @@ func TestAddNewUser(t *testing.T) {
 		exists      bool
 	}{
 		{"user@gmail.com", "newpass", true},
-		{"102@gmail.com", "greatpass", false},
+		{"108@gmail.com", "greatpass", false},
 	}
 
 	for _, c := range cases {
