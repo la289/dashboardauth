@@ -21,7 +21,7 @@ func TestLoginHandler(t *testing.T) {
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
 	//overwrite db connection with mock
-	router.ctrlr.PSQL.DB = db
+	router.Ctrlr.PSQL.DB = db
 
 	cases := []struct {
 		method, path, email, pass, hashedPassword, csrfC, csrfB string
@@ -87,8 +87,8 @@ func TestLogoutHandler(t *testing.T) {
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
 
-	token1, err1 := router.ctrlr.TokenUtil.CreateJWT(60)
-	token2, err2 := router.ctrlr.TokenUtil.CreateJWT(60)
+	token1, err1 := router.Ctrlr.TokenUtil.CreateJWT(60)
+	token2, err2 := router.Ctrlr.TokenUtil.CreateJWT(60)
 	if (err1 != nil || err2 != nil) {
 		t.Errorf("Failed to generate a token. Errors: \n %v \n %v \n", err1, err2 )
 	}

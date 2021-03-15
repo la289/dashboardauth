@@ -2,7 +2,6 @@ package router
 
 import (
 	"encoding/json"
-	"fmt"
 	"iotdashboard/controller"
 	"log"
 	"net"
@@ -11,7 +10,7 @@ import (
 
 
 type RouterService struct{
-	ctrlr controller.ControllerService
+	Ctrlr controller.ControllerService
 	httpPort string
 	httpsPort string
 }
@@ -24,15 +23,15 @@ type Credentials struct {
 }
 
 func NewRouter(httpPort, httpsPort string) (RouterService, error) {
-	ctrlr,err := controller.NewController()
+	Ctrlr,err := controller.NewController()
 	if err != nil{
 		return RouterService{}, err
 	}
-	return RouterService{ctrlr, httpPort, httpsPort}, nil
+	return RouterService{Ctrlr, httpPort, httpsPort}, nil
 }
 
 func (rtr *RouterService) Start(certPath, keyPath string) error {
-	fmt.Printf("Starting webserver ... \n")
+	log.Printf("Starting webserver ... \n")
 	//start listening for http to redirect to https
 	go http.ListenAndServe(rtr.httpPort, http.HandlerFunc(rtr.redirectTLS))
 
@@ -47,12 +46,12 @@ func (rtr *RouterService) Start(certPath, keyPath string) error {
 
 func (rtr *RouterService) handleRequests(certPath, keyPath string) error {
 	mux := http.NewServeMux()
-	//TODO: move the finished react code into a local folder
 	mux.Handle("/", http.FileServer(http.Dir("iotdbfrontend/build/")))
 	mux.HandleFunc("/login", rtr.loginHandler)
 	mux.HandleFunc("/logout", rtr.logoutHandler)
 	mux.HandleFunc("/csrf", rtr.csrfHandler)
 
+	log.Printf("Running! \n")
 	err := http.ListenAndServeTLS(rtr.httpsPort, certPath, keyPath, mux)
 	if err != nil {
 		log.Printf("ListenAndServeTLS Error: %v /n", err)
@@ -82,7 +81,7 @@ func (rtr *RouterService) loginHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("CSRF Validated")
 
 	//Perform Login
-	jwt, err := rtr.ctrlr.Login(creds.Email, creds.Password)
+	jwt, err := rtr.Ctrlr.Login(creds.Email, creds.Password)
 	if err != nil {
 		http.Error(w, "Email and Password do not match", http.StatusUnauthorized)
 		return
@@ -130,7 +129,7 @@ func (rtr *RouterService) logoutHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = rtr.ctrlr.Logout(jwtCookie.Value)
+	err = rtr.Ctrlr.Logout(jwtCookie.Value)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -145,7 +144,7 @@ func (rtr *RouterService) csrfHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	csrf, err := rtr.ctrlr.TokenUtil.GenerateRandomString(128)
+	csrf, err := rtr.Ctrlr.TokenUtil.GenerateRandomString(128)
 	if err != nil {
 		log.Printf("CSRFHandler Error: %v /n", err)
 		http.Error(w, "", http.StatusInternalServerError)
