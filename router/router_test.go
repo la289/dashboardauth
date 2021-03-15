@@ -5,26 +5,41 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"github.com/DATA-DOG/go-sqlmock"
+	"regexp"
 )
 
 func TestLoginHandler(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf("failed to open sqlmock database: %v \n", err)
+	}
+	defer db.Close()
+
 	router,err := NewRouter(":8080",":9090")
 	if err != nil{
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
+	//overwrite db connection with mock
+	router.ctrlr.PSQL.DB = db
 
 	cases := []struct {
-		method, path, email, pass, csrfC, csrfB string
+		method, path, email, pass, hashedPassword, csrfC, csrfB string
 		status                                  int
 	}{
-		{"POST", "/login", "user@gmail.com", "S3cure3Pa$$", "123", "123", http.StatusOK},
-		{"POST", "/login11", "user@gmail.com", "S3cure3Pa$$", "123", "123", http.StatusOK},
-		{"POST", "/login", "user@gmail.com", "S3cure3Pa$$", "1234", "123", http.StatusUnauthorized},
-		{"POST", "/login?1231", "user@gmail.com", "s3cure3Pa$$", "123", "123", http.StatusUnauthorized},
-		{"GET", "/login", "user@gmail.com", "S3cure3Pa$$", "123", "123", http.StatusMethodNotAllowed},
+		{"POST", "/login", "user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "123", "123", http.StatusOK},
+		{"POST", "/login11", "user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "123", "123", http.StatusOK},
+		{"POST", "/login", "user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "1234", "123", http.StatusUnauthorized},
+		{"POST", "/login?1231", "user@gmail.com", "s3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "123", "123", http.StatusUnauthorized},
+		{"GET", "/login", "user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "123", "123", http.StatusMethodNotAllowed},
 	}
 
 	for _, c := range cases {
+		rows := sqlmock.NewRows([]string{"password"}).
+			AddRow(c.hashedPassword)
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT password from users WHERE email = $1")).
+			WillReturnRows(rows)
+
 		// Create test request
 		bodyReader := strings.NewReader(`{"email":"` + c.email +
 			`","password":"` + c.pass +

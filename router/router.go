@@ -48,7 +48,7 @@ func (rtr *RouterService) Start(certPath, keyPath string) error {
 func (rtr *RouterService) handleRequests(certPath, keyPath string) error {
 	mux := http.NewServeMux()
 	//TODO: move the finished react code into a local folder
-	mux.Handle("/", http.FileServer(http.Dir("../../../frontend-root/iot-dashboard/build/")))
+	mux.Handle("/", http.FileServer(http.Dir("iotdbfrontend/build/")))
 	mux.HandleFunc("/login", rtr.loginHandler)
 	mux.HandleFunc("/logout", rtr.logoutHandler)
 	mux.HandleFunc("/csrf", rtr.csrfHandler)
@@ -79,6 +79,7 @@ func (rtr *RouterService) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// CSRF Validation
 	rtr.validateCSRF(w, r, creds)
+	log.Printf("CSRF Validated")
 
 	//Perform Login
 	jwt, err := rtr.ctrlr.Login(creds.Email, creds.Password)
@@ -86,6 +87,8 @@ func (rtr *RouterService) loginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Email and Password do not match", http.StatusUnauthorized)
 		return
 	}
+	log.Printf("Logged In")
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "JWT",
 		Value:    jwt,
@@ -93,6 +96,8 @@ func (rtr *RouterService) loginHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	})
+	log.Printf("Responding")
+
 }
 
 func (rtr *RouterService) logoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -203,6 +208,5 @@ func (rtr *RouterService) getSecHeaders() map[string]string {
 		"X-Frame-Options":           "DENY",
 		"X-Content-Type-Options":    "nosniff",
 		"Cache-Control":             "no-store",
-		"Access-Control-Allow-Origin": "*", //TODO: remove this. Only used for dev while react is served from different spot
 	}
 }

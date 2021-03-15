@@ -6,7 +6,7 @@ import (
 )
 
 type ControllerService struct {
-	psql   dbmanager.DBManager
+	PSQL   dbmanager.DBManager
 	TokenUtil utils.TokenUtil
   }
 
@@ -23,7 +23,7 @@ func NewController() (ControllerService, error) {
 
 func (ct *ControllerService) Login(email, password string) (string, error) {
 	// validate basic auth
-	err := ct.psql.CheckUserCredentials(email, password)
+	err := ct.PSQL.CheckUserCredentials(email, password)
 	if err != nil {
 		return "", err
 	}

@@ -16,6 +16,8 @@ type DBManager struct {
 	DB                     *sql.DB
 }
 
+
+
 func New(user, pass, name string) (DBManager, error) {
 	d := DBManager{dbUser: user, dbPass: pass, dbName: name}
 	err := d.connectToPSQL()
