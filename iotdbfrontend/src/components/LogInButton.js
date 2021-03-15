@@ -1,8 +1,8 @@
 import React from 'react';
 
- const LogInButton = ({handleClick}) => {
+const LogInButton = () => {
     return (
-    <input type="submit" value="Login to my Dashboard" className="button block" onClick={handleClick} />
+        <input type="submit" value="Login to my Dashboard" className="button block" />
     )
 }
 

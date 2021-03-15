@@ -1,6 +1,6 @@
 import React from 'react';
 
-const FormTextField = ({name, onChange}) => {
+const FormTextField = ({ name, onChange }) => {
     return (
         <div>
             <label htmlFor={name}>{name}</label>

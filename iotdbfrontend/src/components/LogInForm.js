@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import LogInButton from './LogInButton.js';
 import FormTextField from './FormTextField.js';
 import Cookies from 'js-cookie';
@@ -7,29 +7,31 @@ import Cookies from 'js-cookie';
 fetch(`/csrf`, {
     method: 'GET',
     credentials: "same-origin"
-  }
-).catch(console.log)
+})
+    .catch(console.log)
 
 
-const LogInForm = ({setLoggedIn}) => {
+const LogInForm = ({ setLoggedIn }) => {
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
 
-
     const handleClick = async (event) => {
         // Added preventDetfault to stop the page from reloading before the response returns
         event.preventDefault();
-        try{
+        try {
             const requestOptions = {
                 method: 'POST',
-                body: JSON.stringify({email: email, password: password, csrf: Cookies.get('CSRF')})
+                body: JSON.stringify({ email: email, password: password, csrf: Cookies.get('CSRF') })
             };
 
             const response = await fetch(`/login`, requestOptions);
 
-            if (response.status == 200){
+            if (response.status == 200) {
                 setLoggedIn(true);
+                //need new cookie since JWT is httponly
+                Cookies.set('logged_in', 'true')
+
             } else {
                 response.text().then(text => alert(text));
             }
@@ -40,15 +42,15 @@ const LogInForm = ({setLoggedIn}) => {
         }
     }
 
-    return(
+    return (
         <form className="login-form" onSubmit={handleClick}>
             <h1>Sign Into Your Account</h1>
 
             <FormTextField name="email" onChange={setEmail} />
 
-            <FormTextField name="password" onChange={setPassword}/>
+            <FormTextField name="password" onChange={setPassword} />
 
-            <LogInButton onClick={handleClick}/>
+            <LogInButton />
         </form>
     )
 

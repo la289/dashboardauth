@@ -1,6 +1,3 @@
-import logo from './logo.svg';
-import './App.css';
-import LogInForm from './components/LogInForm.js';
 import Dashboard from './components/Dashboard';
 
 function App() {
@@ -9,12 +6,6 @@ function App() {
       <Dashboard />
     </div>
   );
-
-  // if state.loggedIn()
-  // return Dashboard
-  // else
-  // return LogInForm
 }
-
 
 export default App;
