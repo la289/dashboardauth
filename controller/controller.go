@@ -6,9 +6,9 @@ import (
 )
 
 type ControllerService struct {
-	PSQL   dbmanager.DBManager
+	PSQL      dbmanager.DBManager
 	TokenUtil utils.TokenUtil
-  }
+}
 
 func NewController() (ControllerService, error) {
 	PSQL, err := dbmanager.New("postgres", "myPassword", "iot_dashboard")
@@ -19,7 +19,6 @@ func NewController() (ControllerService, error) {
 
 	return ControllerService{PSQL, TokenUtil}, nil
 }
-
 
 func (ct *ControllerService) Login(email, password string) (string, error) {
 	// validate basic auth
@@ -38,8 +37,6 @@ func (ct *ControllerService) Login(email, password string) (string, error) {
 }
 
 func (ct *ControllerService) Logout(token string) error {
-	// validate CSRF
-
 	// validate JWT
 	exp, err := ct.TokenUtil.GetJWTExpiry(token)
 	if err != nil {
@@ -50,4 +47,3 @@ func (ct *ControllerService) Logout(token string) error {
 	return nil
 
 }
-

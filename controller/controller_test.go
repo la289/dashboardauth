@@ -1,12 +1,12 @@
 package controller
 
 import (
-	"testing"
-	"github.com/DATA-DOG/go-sqlmock"
 	"regexp"
+	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
 	// "fmt"
 )
-
 
 func TestLoginAndLogout(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -24,7 +24,7 @@ func TestLoginAndLogout(t *testing.T) {
 
 	cases := []struct {
 		email, password, hashedPassword string
-		success      bool
+		success                         bool
 	}{
 		{"user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", true},
 		{"user@gmail.com", "wrongpass", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", false},
@@ -42,21 +42,18 @@ func TestLoginAndLogout(t *testing.T) {
 			t.Errorf("Login failed (email: %s - pass: %s). Error: %v", c.email, c.password, err)
 		}
 
-	// if successful login, test logout
-	if c.success == true {
-		err = controller.Logout(jwt)
-		if err != nil {
-			t.Errorf("Logout failed (email: %s - pass: %s). Error: %v", c.email, c.password, err)
-		}
-		//test second logout on same JWT
-		err = controller.Logout(jwt)
-		if err == nil {
-			t.Errorf("Logout succeded when it should have failed (email: %s - pass: %s).", c.email, c.password)
+		// if successful login, test logout
+		if c.success == true {
+			err = controller.Logout(jwt)
+			if err != nil {
+				t.Errorf("Logout failed (email: %s - pass: %s). Error: %v", c.email, c.password, err)
+			}
+			//test second logout on same JWT
+			err = controller.Logout(jwt)
+			if err == nil {
+				t.Errorf("Logout succeded when it should have failed (email: %s - pass: %s).", c.email, c.password)
+			}
 		}
 	}
-}
-
-
 
 }
-

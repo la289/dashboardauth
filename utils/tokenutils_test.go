@@ -20,12 +20,10 @@ func TestGenerateRandomString(t *testing.T) {
 	}
 	n := 5
 	s, err := tu.GenerateRandomString(n)
-	if (err != nil || len(s) != n) {
+	if err != nil || len(s) != n {
 		t.Errorf("The signing key is wrong: %s", s)
 	}
 }
-
-
 
 func TestCreateAndGetJWTExpiry(t *testing.T) {
 	tu, err := NewTokenUtil()
@@ -65,7 +63,7 @@ func TestCreateAndBlocklistJWT(t *testing.T) {
 		t.Errorf("JWT creation failed: %s", err)
 	}
 
-	tu.BlockListToken(token, time.Now().UTC().Add(time.Second * 60))
+	tu.BlockListToken(token, time.Now().UTC().Add(time.Second*60))
 
 	//test validation of logged out token
 	_, err = tu.GetJWTExpiry(token)

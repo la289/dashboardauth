@@ -3,10 +3,11 @@ package router
 import (
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
+
 	"github.com/DATA-DOG/go-sqlmock"
-	"regexp"
 )
 
 func TestLoginHandler(t *testing.T) {
@@ -16,8 +17,8 @@ func TestLoginHandler(t *testing.T) {
 	}
 	defer db.Close()
 
-	router,err := NewRouter(":8080",":9090")
-	if err != nil{
+	router, err := NewRouter(":8080", ":9090")
+	if err != nil {
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
 	//overwrite db connection with mock
@@ -25,7 +26,7 @@ func TestLoginHandler(t *testing.T) {
 
 	cases := []struct {
 		method, path, email, pass, hashedPassword, csrfC, csrfB string
-		status                                  int
+		status                                                  int
 	}{
 		{"POST", "/login", "user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "123", "123", http.StatusOK},
 		{"POST", "/login11", "user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "123", "123", http.StatusOK},
@@ -82,15 +83,15 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func TestLogoutHandler(t *testing.T) {
-	router,err := NewRouter(":8080",":9090")
-	if err != nil{
+	router, err := NewRouter(":8080", ":9090")
+	if err != nil {
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
 
 	token1, err1 := router.Ctrlr.TokenUtil.CreateJWT(60)
 	token2, err2 := router.Ctrlr.TokenUtil.CreateJWT(60)
-	if (err1 != nil || err2 != nil) {
-		t.Errorf("Failed to generate a token. Errors: \n %v \n %v \n", err1, err2 )
+	if err1 != nil || err2 != nil {
+		t.Errorf("Failed to generate a token. Errors: \n %v \n %v \n", err1, err2)
 	}
 	cases := []struct {
 		method, path, jwt, csrfC, csrfB string
@@ -137,8 +138,8 @@ func TestLogoutHandler(t *testing.T) {
 }
 
 func TestCsrfHandler(t *testing.T) {
-	router,err := NewRouter(":8080",":9090")
-	if err != nil{
+	router, err := NewRouter(":8080", ":9090")
+	if err != nil {
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
 
@@ -190,14 +191,14 @@ func TestCsrfHandler(t *testing.T) {
 // func TestValidateCSRF(t *testing.T){} -> validated through request handler testing
 
 func TestRedirectTLS(t *testing.T) {
-	router,err := NewRouter(":8080",":9090")
-	if err != nil{
+	router, err := NewRouter(":8080", ":9090")
+	if err != nil {
 		t.Errorf("Could not initialize router: %v \n", err)
 	}
 
 	cases := []struct {
 		method, path, newPath string
-		status       int
+		status                int
 	}{
 		{"GET", "http://192.0.0.1:8080", "https://192.0.0.1:9090", http.StatusPermanentRedirect},
 		{"POST", "http://192.0.0.1:8080/login", "https://192.0.0.1:9090/login", http.StatusPermanentRedirect},
@@ -223,7 +224,7 @@ func TestRedirectTLS(t *testing.T) {
 		}
 		//Evaluate redirect url
 		redirectURL, err := response.Location()
-		if (redirectURL.String() != c.newPath || err != nil) {
+		if redirectURL.String() != c.newPath || err != nil {
 			t.Errorf("Expected URL: %v - Received URL: %v \n", c.newPath, redirectURL)
 		}
 

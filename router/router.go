@@ -8,10 +8,9 @@ import (
 	"net/http"
 )
 
-
-type RouterService struct{
-	Ctrlr controller.ControllerService
-	httpPort string
+type RouterService struct {
+	Ctrlr     controller.ControllerService
+	httpPort  string
 	httpsPort string
 }
 
@@ -23,8 +22,8 @@ type Credentials struct {
 }
 
 func NewRouter(httpPort, httpsPort string) (RouterService, error) {
-	Ctrlr,err := controller.NewController()
-	if err != nil{
+	Ctrlr, err := controller.NewController()
+	if err != nil {
 		return RouterService{}, err
 	}
 	return RouterService{Ctrlr, httpPort, httpsPort}, nil
@@ -37,7 +36,7 @@ func (rtr *RouterService) Start(certPath, keyPath string) error {
 
 	//start listening for https and handle requests
 	err := rtr.handleRequests(certPath, keyPath)
-	if err != nil{
+	if err != nil {
 		log.Printf("HandleRequests Error: %v /n", err)
 		return err
 	}
@@ -167,7 +166,7 @@ func (rtr *RouterService) redirectTLS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	u := r.URL
-	u.Host = net.JoinHostPort(host, rtr.httpsPort [1:])
+	u.Host = net.JoinHostPort(host, rtr.httpsPort[1:])
 	u.Scheme = "https"
 	target := u.String()
 
@@ -198,7 +197,6 @@ func (rtr *RouterService) addHeaders(w http.ResponseWriter) {
 		w.Header().Set(key, value)
 	}
 }
-
 
 func (rtr *RouterService) getSecHeaders() map[string]string {
 	return map[string]string{

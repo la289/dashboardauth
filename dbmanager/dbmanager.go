@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	_ "github.com/lib/pq" //db driver for postgres
 	"golang.org/x/crypto/bcrypt"
-
 )
 
 var ErrUserNonexistant = errors.New("User does not exist")
@@ -16,8 +16,7 @@ type DBManager struct {
 	DB                     *sql.DB
 }
 
-
-
+//New creates a new DBManager instance and returns it
 func New(user, pass, name string) (DBManager, error) {
 	d := DBManager{dbUser: user, dbPass: pass, dbName: name}
 	err := d.connectToPSQL()
@@ -48,8 +47,7 @@ func (db *DBManager) getPasswordHash(email string) ([]byte, error) {
 	return hash, nil
 }
 
-
-// returns an Error if the credentials are not valid
+//CheckUserCredentials returns an Error if the supplied credentials do not match any row in the database.
 func (db *DBManager) CheckUserCredentials(email, password string) error {
 	hash, err := db.getPasswordHash(email)
 	if err != nil {
@@ -58,8 +56,7 @@ func (db *DBManager) CheckUserCredentials(email, password string) error {
 	return bcrypt.CompareHashAndPassword(hash, []byte(password))
 }
 
-
-// Returns err if user is not added to DB
+//AddNewUser returns an Error if the user is not successfully added to DB
 func (db *DBManager) AddNewUser(email, password string) error {
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
@@ -73,7 +70,7 @@ func (db *DBManager) AddNewUser(email, password string) error {
 	return nil
 }
 
-// Returns an error if the connection is not made
+//ConnectToPSQL returns an error if the connection to the DB is not successful
 func (db *DBManager) connectToPSQL() error {
 	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
 		db.dbUser, db.dbPass, db.dbName)

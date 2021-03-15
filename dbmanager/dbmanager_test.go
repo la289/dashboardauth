@@ -1,12 +1,12 @@
 package dbmanager
 
 import (
-	"testing"
-	"github.com/DATA-DOG/go-sqlmock"
-	"regexp"
 	"fmt"
-)
+	"regexp"
+	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
+)
 
 // TestCheckUserCredentials inherently also tests getPasswordHash
 func TestCheckUserCredentials(t *testing.T) {
@@ -17,7 +17,7 @@ func TestCheckUserCredentials(t *testing.T) {
 	defer db.Close()
 
 	PSQL, err := New("postgres", "myPassword", "iot_dashboard")
-	if err != nil{
+	if err != nil {
 		t.Errorf("Unable to initialize DB Manager: %v \n", err)
 	}
 	//overwrite db connection with mock
@@ -25,7 +25,7 @@ func TestCheckUserCredentials(t *testing.T) {
 
 	cases := []struct {
 		email, password, hashedPassword string
-		exists      bool
+		exists                          bool
 	}{
 		{"user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", true},
 		{"user@gmail.com", "wrongpass", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", false},
@@ -53,7 +53,7 @@ func TestAddNewUser(t *testing.T) {
 	defer db.Close()
 
 	PSQL, err := New("postgres", "myPassword", "iot_dashboard")
-	if err != nil{
+	if err != nil {
 		t.Errorf("Unable to initialize DB Manager: %v \n", err)
 	}
 	//overwrite db connection with mock
@@ -61,7 +61,7 @@ func TestAddNewUser(t *testing.T) {
 
 	cases := []struct {
 		email, pass, mockResponse string
-		shouldSucceed      bool
+		shouldSucceed             bool
 	}{
 		{"user@gmail.com", "newpass", "INSERT 0 1", true},
 		{"user@gmail.com", "greatpass", `ERROR:  duplicate key value violates unique constraint "users_email_key"`, false},
@@ -74,7 +74,6 @@ func TestAddNewUser(t *testing.T) {
 		} else {
 			mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO users(email,password) VALUES ($1 , $2);")).WillReturnError(fmt.Errorf(c.mockResponse))
 		}
-
 
 		err := PSQL.AddNewUser(c.email, c.pass)
 		if (err != nil && c.shouldSucceed) || (err == nil && !c.shouldSucceed) {

@@ -1,12 +1,13 @@
 package utils
 
-import(
+import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
-	"github.com/dgrijalva/jwt-go"
-	"time"
 	"sync"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 type Claims struct {
@@ -14,9 +15,9 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-type TokenUtil struct{
+type TokenUtil struct {
 	jwtKey []byte
-	// blocklist key is the JWT and the value is the expiration epoch time
+	//Blocklist key is the JWT and the value is the expiration epoch time
 	blocklist *sync.Map
 }
 
@@ -71,7 +72,7 @@ func (tu *TokenUtil) GetJWTExpiry(rawToken string) (time.Time, error) {
 	}
 
 	now := time.Now().UTC().Unix()
-	expiresAt := time.Unix(claims.ExpiresAt,0)
+	expiresAt := time.Unix(claims.ExpiresAt, 0)
 	if claims.ExpiresAt < now || now < claims.NotBefore {
 		return expiresAt, ErrExpiredToken
 	}
@@ -88,9 +89,8 @@ func (tu *TokenUtil) GenerateRandomString(n int) (string, error) {
 	return base64.URLEncoding.EncodeToString(s)[:n], err
 }
 
-func  GenerateRandomToken(n int) ([]byte, error) {
+func GenerateRandomToken(n int) ([]byte, error) {
 	key := make([]byte, n)
 	_, err := rand.Read(key)
 	return key, err
 }
-
