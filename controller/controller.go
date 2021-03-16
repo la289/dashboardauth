@@ -6,21 +6,21 @@ import (
 )
 
 type ControllerService struct {
-	PSQL      dbmanager.DBManager
-	TokenUtil utils.TokenUtil
+	PSQL      *dbmanager.DBManager
+	TokenUtil *utils.TokenUtil
 }
 
-func NewController() (ControllerService, error) {
-	PSQL, err := dbmanager.New("postgres", "myPassword", "iot_dashboard")
+func NewController() (*ControllerService, error) {
+	psql, err := dbmanager.New("postgres", "myPassword", "iot_dashboard")
 	if err != nil {
-		return ControllerService{}, err
+		return &ControllerService{}, err
 	}
-	TokenUtil, err := utils.NewTokenUtil()
+	tokenUtil, err := utils.NewTokenUtil()
 	if err != nil {
-		return ControllerService{}, err
+		return &ControllerService{}, err
 	}
 
-	return ControllerService{PSQL, TokenUtil}, nil
+	return &ControllerService{psql, tokenUtil}, nil
 }
 
 func (ct *ControllerService) Login(email, password string) (string, error) {
@@ -31,7 +31,7 @@ func (ct *ControllerService) Login(email, password string) (string, error) {
 	}
 
 	// create and return JWT
-	token, err := ct.TokenUtil.CreateJWT(15)
+	token, err := ct.TokenUtil.CreateJWT(60)
 	if err != nil {
 		return "", err
 	}

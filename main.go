@@ -13,11 +13,11 @@ func main() {
 
 	err = router.Ctrlr.PSQL.AddNewUser("e@g.c", "test")
 	if err != nil {
-		log.Printf("Admin user already exists in DB")
+		log.Printf("Not able to add new user: %v", err)
 	}
 
 	err = router.Start()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }

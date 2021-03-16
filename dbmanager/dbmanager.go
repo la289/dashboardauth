@@ -17,10 +17,10 @@ type DBManager struct {
 }
 
 //New creates a new DBManager instance and returns it
-func New(user, pass, name string) (DBManager, error) {
+func New(user, pass, name string) (*DBManager, error) {
 	d := DBManager{dbUser: user, dbPass: pass, dbName: name}
 	err := d.connectToPSQL()
-	return d, err
+	return &d, err
 }
 
 func (db *DBManager) getPasswordHash(email string) ([]byte, error) {
@@ -30,10 +30,6 @@ func (db *DBManager) getPasswordHash(email string) ([]byte, error) {
 	if err := result.Scan(&hash); err != nil {
 		return nil, err
 	}
-	if len(hash) != 60 {
-		return nil, ErrUserNonexistant
-	}
-
 	return hash, nil
 }
 

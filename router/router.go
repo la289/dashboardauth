@@ -10,7 +10,7 @@ import (
 )
 
 type RouterService struct {
-	Ctrlr     controller.ControllerService
+	Ctrlr     *controller.ControllerService
 	httpPort  string
 	httpsPort string
 	certPath  string
@@ -24,12 +24,12 @@ type Credentials struct {
 	CSRF     string `json:"csrf"`
 }
 
-func NewRouter(httpPort, httpsPort, certPath, keyPath string) (RouterService, error) {
+func NewRouter(httpPort, httpsPort, certPath, keyPath string) (*RouterService, error) {
 	Ctrlr, err := controller.NewController()
 	if err != nil {
-		return RouterService{}, err
+		return &RouterService{}, err
 	}
-	return RouterService{Ctrlr, httpPort, httpsPort, certPath, keyPath}, nil
+	return &RouterService{Ctrlr, httpPort, httpsPort, certPath, keyPath}, nil
 }
 
 func (rtr *RouterService) Start() error {
@@ -52,7 +52,6 @@ func (rtr *RouterService) handleRequests(certPath, keyPath string) error {
 	mux.HandleFunc("/login", rtr.loginHandler)
 	mux.HandleFunc("/logout", rtr.logoutHandler)
 	mux.HandleFunc("/csrf", rtr.csrfHandler)
-
 	log.Printf("Running! \n")
 	err := http.ListenAndServeTLS(rtr.httpsPort, certPath, keyPath, mux)
 	if err != nil {
@@ -63,7 +62,6 @@ func (rtr *RouterService) handleRequests(certPath, keyPath string) error {
 }
 
 func (rtr *RouterService) loginHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received POST/login request")
 	rtr.addHeaders(w)
 	if r.Method != "POST" {
 		http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
@@ -79,13 +77,12 @@ func (rtr *RouterService) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// CSRF Validation
-	// CSRF Validation
 	err = rtr.validateCSRF(w, r, creds)
 	if err != nil {
+		// error is returned to client in validateCSRF function
 		log.Printf("CSRF Validation err: %v", err)
 		return
 	}
-	log.Printf("CSRF Validated")
 
 	//Perform Login
 	jwt, err := rtr.Ctrlr.Login(creds.Email, creds.Password)
@@ -93,7 +90,6 @@ func (rtr *RouterService) loginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Email and Password do not match", http.StatusUnauthorized)
 		return
 	}
-	log.Printf("Logged In")
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "JWT",
@@ -102,13 +98,10 @@ func (rtr *RouterService) loginHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	})
-	log.Printf("Responding")
-
 }
 
 func (rtr *RouterService) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	rtr.addHeaders(w)
-	log.Printf("Received POST/logout request")
 	if r.Method != "POST" {
 		http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
 		return
@@ -127,10 +120,10 @@ func (rtr *RouterService) logoutHandler(w http.ResponseWriter, r *http.Request) 
 	// CSRF Validation
 	err = rtr.validateCSRF(w, r, creds)
 	if err != nil {
+		// error is returned to client in validateCSRF function
 		log.Printf("CSRF Validation err: %v", err)
 		return
 	}
-	log.Printf("CSRF Validated")
 
 	jwtCookie, err := r.Cookie("JWT")
 	if err != nil {
@@ -141,14 +134,12 @@ func (rtr *RouterService) logoutHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	log.Printf("JWT Validated")
 
 	err = rtr.Ctrlr.Logout(jwtCookie.Value)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	log.Printf("Logged Out")
 }
 
 func (rtr *RouterService) csrfHandler(w http.ResponseWriter, r *http.Request) {

@@ -10,10 +10,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-type Claims struct {
-	jwt.StandardClaims
-}
-
 type TokenUtil struct {
 	jwtKey []byte
 	//Blocklist key is the JWT and the value is the expiration epoch time
@@ -22,22 +18,20 @@ type TokenUtil struct {
 
 var ErrExpiredToken = errors.New("Token is expired")
 
-func NewTokenUtil() (TokenUtil, error) {
+func NewTokenUtil() (*TokenUtil, error) {
 	jwtKey, err := GenerateRandomToken(256)
 	if err != nil {
-		return TokenUtil{}, err
+		return &TokenUtil{}, err
 	}
-	return TokenUtil{jwtKey, new(sync.Map)}, nil
+	return &TokenUtil{jwtKey, new(sync.Map)}, nil
 }
 
 func (tu *TokenUtil) CreateJWT(validPeriod time.Duration) (string, error) {
-	claims := Claims{
-		StandardClaims: jwt.StandardClaims{
-			// In JWT, the expiry time is expressed as unix time
-			ExpiresAt: time.Now().UTC().Add(time.Second * validPeriod).Unix(),
-			Issuer:    "iot-dash",
-			NotBefore: time.Now().UTC().Unix(),
-		},
+	claims := jwt.StandardClaims{
+		// In JWT, the expiry time is expressed as unix time
+		ExpiresAt: time.Now().UTC().Add(time.Second * validPeriod).Unix(),
+		Issuer:    "iot-dash",
+		NotBefore: time.Now().UTC().Add(time.Second * -10).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
@@ -57,7 +51,7 @@ func (tu *TokenUtil) GetJWTExpiry(rawToken string) (time.Time, error) {
 	}
 	token, err := jwt.ParseWithClaims(
 		rawToken,
-		&Claims{},
+		&jwt.StandardClaims{},
 		func(rawToken *jwt.Token) (interface{}, error) {
 			return tu.jwtKey, nil
 		})
@@ -65,7 +59,7 @@ func (tu *TokenUtil) GetJWTExpiry(rawToken string) (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	claims, ok := token.Claims.(*Claims)
+	claims, ok := token.Claims.(*jwt.StandardClaims)
 	if !ok {
 		return time.Time{}, errors.New("Couldn't Parse Token Claims")
 	}
