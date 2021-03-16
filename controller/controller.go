@@ -29,7 +29,7 @@ func (ct *ControllerService) Login(email, password string) (string, error) {
 
 	// create and return JWT
 	var token string
-	token, err = ct.TokenUtil.CreateJWT(60)
+	token, err = ct.TokenUtil.CreateJWT(15)
 	if err != nil {
 		return "", err
 	}
@@ -37,6 +37,8 @@ func (ct *ControllerService) Login(email, password string) (string, error) {
 }
 
 func (ct *ControllerService) Logout(token string) error {
+	// validate CSRF
+
 	// validate JWT
 	exp, err := ct.TokenUtil.GetJWTExpiry(token)
 	if err != nil {
