@@ -15,7 +15,10 @@ func NewController() (ControllerService, error) {
 	if err != nil {
 		return ControllerService{}, err
 	}
-	TokenUtil, err := utils.NewTokenUtil()
+	TokenUtil, err := utils.NewTokenUtil()	
+	if err != nil {
+		return ControllerService{}, err
+	}
 
 	return ControllerService{PSQL, TokenUtil}, nil
 }
