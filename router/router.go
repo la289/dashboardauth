@@ -35,7 +35,9 @@ func NewRouter(httpPort, httpsPort, certPath, keyPath string) (*RouterService, e
 func (rtr *RouterService) Start() error {
 	log.Printf("Starting webserver ... \n")
 	//start listening for http to redirect to https
-	go log.Print(http.ListenAndServe(rtr.httpPort, http.HandlerFunc(rtr.redirectTLS)))
+	go func() {
+		log.Print(http.ListenAndServe(rtr.httpPort, http.HandlerFunc(rtr.redirectTLS)))
+	}()
 
 	//start listening for https and handle requests
 	err := rtr.handleRequests(rtr.certPath, rtr.keyPath)
