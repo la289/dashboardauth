@@ -13,6 +13,8 @@ type RouterService struct {
 	Ctrlr     controller.ControllerService
 	httpPort  string
 	httpsPort string
+	certPath  string
+	keyPath   string
 }
 
 // Credentials is a struct that holds the email, password, and CSRF token of a request
@@ -22,23 +24,23 @@ type Credentials struct {
 	CSRF     string `json:"csrf"`
 }
 
-func NewRouter(httpPort, httpsPort string) (RouterService, error) {
+func NewRouter(httpPort, httpsPort, certPath, keyPath string) (RouterService, error) {
 	Ctrlr, err := controller.NewController()
 	if err != nil {
 		return RouterService{}, err
 	}
-	return RouterService{Ctrlr, httpPort, httpsPort}, nil
+	return RouterService{Ctrlr, httpPort, httpsPort, certPath, keyPath}, nil
 }
 
-func (rtr *RouterService) Start(certPath, keyPath string) error {
+func (rtr *RouterService) Start() error {
 	log.Printf("Starting webserver ... \n")
 	//start listening for http to redirect to https
-	go http.ListenAndServe(rtr.httpPort, http.HandlerFunc(rtr.redirectTLS))
+	go log.Print(http.ListenAndServe(rtr.httpPort, http.HandlerFunc(rtr.redirectTLS)))
 
 	//start listening for https and handle requests
-	err := rtr.handleRequests(certPath, keyPath)
+	err := rtr.handleRequests(rtr.certPath, rtr.keyPath)
 	if err != nil {
-		log.Printf("HandleRequests Error: %v /n", err)
+		log.Printf("HandleRequests Error: %v \n", err)
 		return err
 	}
 	return nil
@@ -113,7 +115,8 @@ func (rtr *RouterService) logoutHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var creds Credentials
-	// Get the JSON body and decode into credentials
+	// Get the JSON body and decode into Credentials struct
+	// No validation happens on credentials, except for CSRF token
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
 		log.Printf("LogoutHandler Error: %v /n", err)

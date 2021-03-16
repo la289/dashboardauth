@@ -16,7 +16,7 @@ func TestGenerateRandomToken(t *testing.T) {
 func TestGenerateRandomString(t *testing.T) {
 	tu, err := NewTokenUtil()
 	if err != nil {
-		t.Errorf("Not able to create TokenUtil: %v \n", err)
+		t.Fatalf("Not able to create TokenUtil: %v \n", err)
 	}
 	n := 5
 	s, err := tu.GenerateRandomString(n)
@@ -28,7 +28,7 @@ func TestGenerateRandomString(t *testing.T) {
 func TestCreateAndGetJWTExpiry(t *testing.T) {
 	tu, err := NewTokenUtil()
 	if err != nil {
-		t.Errorf("Not able to create TokenUtil: %v \n", err)
+		t.Fatalf("Not able to create TokenUtil: %v \n", err)
 	}
 	token, err := tu.CreateJWT(2)
 	if err != nil {
@@ -56,7 +56,7 @@ func TestCreateAndGetJWTExpiry(t *testing.T) {
 func TestCreateAndBlocklistJWT(t *testing.T) {
 	tu, err := NewTokenUtil()
 	if err != nil {
-		t.Errorf("Not able to create TokenUtil: %v \n", err)
+		t.Fatalf("Not able to create TokenUtil: %v \n", err)
 	}
 	token, err := tu.CreateJWT(60)
 	if err != nil {

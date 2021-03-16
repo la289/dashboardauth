@@ -12,13 +12,13 @@ import (
 func TestCheckUserCredentials(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Errorf("failed to open sqlmock database: %v \n", err)
+		t.Fatalf("failed to open sqlmock database: %v \n", err)
 	}
 	defer db.Close()
 
 	PSQL, err := New("postgres", "myPassword", "iot_dashboard")
 	if err != nil {
-		t.Errorf("Unable to initialize DB Manager: %v \n", err)
+		t.Fatalf("Unable to initialize DB Manager: %v \n", err)
 	}
 	//overwrite db connection with mock
 	PSQL.DB = db
@@ -48,13 +48,13 @@ func TestCheckUserCredentials(t *testing.T) {
 func TestAddNewUser(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Errorf("failed to open sqlmock database: %v \n", err)
+		t.Fatalf("failed to open sqlmock database: %v \n", err)
 	}
 	defer db.Close()
 
 	PSQL, err := New("postgres", "myPassword", "iot_dashboard")
 	if err != nil {
-		t.Errorf("Unable to initialize DB Manager: %v \n", err)
+		t.Fatalf("Unable to initialize DB Manager: %v \n", err)
 	}
 	//overwrite db connection with mock
 	PSQL.DB = db
@@ -69,10 +69,11 @@ func TestAddNewUser(t *testing.T) {
 
 	for _, c := range cases {
 		if c.shouldSucceed {
-			rows := sqlmock.NewRows([]string{c.mockResponse})
-			mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO users(email,password) VALUES ($1 , $2);")).WillReturnRows(rows)
+			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO users(email,password) VALUES ($1 , $2);")).
+				WillReturnResult(sqlmock.NewResult(1, 1)) //result not important since we only check for error
 		} else {
-			mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO users(email,password) VALUES ($1 , $2);")).WillReturnError(fmt.Errorf(c.mockResponse))
+			mock.ExpectExec(regexp.QuoteMeta("INSERT INTO users(email,password) VALUES ($1 , $2);")).
+				WillReturnError(fmt.Errorf(c.mockResponse))
 		}
 
 		err := PSQL.AddNewUser(c.email, c.pass)

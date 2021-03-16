@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -13,13 +14,13 @@ import (
 func TestLoginHandler(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Errorf("failed to open sqlmock database: %v \n", err)
+		t.Fatalf("failed to open sqlmock database: %v \n", err)
 	}
 	defer db.Close()
 
-	router, err := NewRouter(":8080", ":9090")
+	router, err := NewRouter(":8080", ":9090", "server-cert.pem", "server-key.pem")
 	if err != nil {
-		t.Errorf("Could not initialize router: %v \n", err)
+		t.Fatalf("Could not initialize router: %v \n", err)
 	}
 	//overwrite db connection with mock
 	router.Ctrlr.PSQL.DB = db
@@ -43,9 +44,8 @@ func TestLoginHandler(t *testing.T) {
 			WillReturnRows(rows)
 
 		// Create test request
-		bodyReader := strings.NewReader(`{"email":"` + c.email +
-			`","password":"` + c.pass +
-			`","csrf":"` + c.csrfB + `"}`)
+		bodyReader := strings.NewReader(fmt.Sprintf(`{"email": "%s", "password": "%s", "csrf": "%s"}`, c.email, c.pass, c.csrfB))
+
 		req, err := http.NewRequest(c.method, c.path, bodyReader)
 		if err != nil {
 			t.Errorf("Failed to make %v request %v", c.method, err)
@@ -86,16 +86,21 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func TestLogoutHandler(t *testing.T) {
-	router, err := NewRouter(":8080", ":9090")
+	router, err := NewRouter(":8080", ":9090", "server-cert.pem", "server-key.pem")
 	if err != nil {
-		t.Errorf("Could not initialize router: %v \n", err)
+		t.Fatalf("Could not initialize router: %v \n", err)
 	}
 
-	token1, err1 := router.Ctrlr.TokenUtil.CreateJWT(60)
-	token2, err2 := router.Ctrlr.TokenUtil.CreateJWT(60)
-	if err1 != nil || err2 != nil {
-		t.Errorf("Failed to generate a token. Errors: \n %v \n %v \n", err1, err2)
+	token1, err := router.Ctrlr.TokenUtil.CreateJWT(15)
+	if err != nil {
+		t.Fatalf("Failed to generate a token. Error: \n %v \n", err)
 	}
+
+	token2, err := router.Ctrlr.TokenUtil.CreateJWT(15)
+	if err != nil {
+		t.Fatalf("Failed to generate a token. Error: \n %v \n", err)
+	}
+
 	cases := []struct {
 		method, path, jwt, csrfC, csrfB string
 		status                          int
@@ -110,7 +115,7 @@ func TestLogoutHandler(t *testing.T) {
 
 	for _, c := range cases {
 		// Create test request
-		bodyReader := strings.NewReader(`{"csrf":"` + c.csrfB + `"}`)
+		bodyReader := strings.NewReader(fmt.Sprintf(`{"csrf": "%s"}`, c.csrfB))
 
 		req, err := http.NewRequest(c.method, c.path, bodyReader)
 		if err != nil {
@@ -141,9 +146,9 @@ func TestLogoutHandler(t *testing.T) {
 }
 
 func TestCsrfHandler(t *testing.T) {
-	router, err := NewRouter(":8080", ":9090")
+	router, err := NewRouter(":8080", ":9090", "server-cert.pem", "server-key.pem")
 	if err != nil {
-		t.Errorf("Could not initialize router: %v \n", err)
+		t.Fatalf("Could not initialize router: %v \n", err)
 	}
 
 	cases := []struct {
@@ -194,9 +199,9 @@ func TestCsrfHandler(t *testing.T) {
 // func TestValidateCSRF(t *testing.T){} -> validated through request handler testing
 
 func TestRedirectTLS(t *testing.T) {
-	router, err := NewRouter(":8080", ":9090")
+	router, err := NewRouter(":8080", ":9090", "server-cert.pem", "server-key.pem")
 	if err != nil {
-		t.Errorf("Could not initialize router: %v \n", err)
+		t.Fatalf("Could not initialize router: %v \n", err)
 	}
 
 	cases := []struct {

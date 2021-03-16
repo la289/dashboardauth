@@ -6,9 +6,9 @@ import (
 )
 
 func main() {
-	router, err := router.NewRouter(":8080", ":9090")
+	router, err := router.NewRouter(":8080", ":9090", "server-cert.pem", "server-key.pem")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	err = router.Ctrlr.PSQL.AddNewUser("e@g.c", "test")
@@ -16,7 +16,7 @@ func main() {
 		log.Printf("Admin user already exists in DB")
 	}
 
-	err = router.Start("server-cert.pem", "server-key.pem")
+	err = router.Start()
 	if err != nil {
 		panic(err)
 	}

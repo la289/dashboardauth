@@ -15,7 +15,7 @@ func NewController() (ControllerService, error) {
 	if err != nil {
 		return ControllerService{}, err
 	}
-	TokenUtil, err := utils.NewTokenUtil()	
+	TokenUtil, err := utils.NewTokenUtil()
 	if err != nil {
 		return ControllerService{}, err
 	}
@@ -31,8 +31,7 @@ func (ct *ControllerService) Login(email, password string) (string, error) {
 	}
 
 	// create and return JWT
-	var token string
-	token, err = ct.TokenUtil.CreateJWT(15)
+	token, err := ct.TokenUtil.CreateJWT(15)
 	if err != nil {
 		return "", err
 	}

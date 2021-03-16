@@ -11,7 +11,6 @@ import (
 )
 
 type Claims struct {
-	NotBefore int64 `json:"nbf"`
 	jwt.StandardClaims
 }
 
@@ -33,11 +32,11 @@ func NewTokenUtil() (TokenUtil, error) {
 
 func (tu *TokenUtil) CreateJWT(validPeriod time.Duration) (string, error) {
 	claims := Claims{
-		NotBefore: time.Now().UTC().Unix(),
 		StandardClaims: jwt.StandardClaims{
-			// In JWT, the expiry time is expressed as unix milliseconds
+			// In JWT, the expiry time is expressed as unix time
 			ExpiresAt: time.Now().UTC().Add(time.Second * validPeriod).Unix(),
 			Issuer:    "iot-dash",
+			NotBefore: time.Now().UTC().Unix(),
 		},
 	}
 

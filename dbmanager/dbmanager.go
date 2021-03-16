@@ -24,20 +24,10 @@ func New(user, pass, name string) (DBManager, error) {
 }
 
 func (db *DBManager) getPasswordHash(email string) ([]byte, error) {
-	rows, err := db.DB.Query(`SELECT password from users WHERE email = $1`, email)
-	if err != nil {
-		return nil, err
-	}
+	result := db.DB.QueryRow(`SELECT password from users WHERE email = $1`, email)
 
-	hasNextRow := rows.Next()
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	if !hasNextRow {
-		return nil, ErrUserNonexistant
-	}
 	var hash []byte
-	if err = rows.Scan(&hash); err != nil {
+	if err := result.Scan(&hash); err != nil {
 		return nil, err
 	}
 	if len(hash) != 60 {
@@ -63,7 +53,7 @@ func (db *DBManager) AddNewUser(email, password string) error {
 		return err
 	}
 
-	_, err = db.DB.Query(`INSERT INTO users(email,password) VALUES ($1 , $2);`, email, hashedPass)
+	_, err = db.DB.Exec(`INSERT INTO users(email,password) VALUES ($1 , $2);`, email, hashedPass)
 	if err != nil {
 		return err
 	}
@@ -91,7 +81,7 @@ func (db *DBManager) connectToPSQL() error {
 }
 
 func (db *DBManager) initSchemaUsers() error {
-	_, err := db.DB.Query(`
+	_, err := db.DB.Exec(`
 		CREATE TABLE IF NOT EXISTS users(
 			 uid serial PRIMARY KEY,
 			 email VARCHAR (254) UNIQUE NOT NULL,

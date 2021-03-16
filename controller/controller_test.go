@@ -5,19 +5,18 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	// "fmt"
 )
 
 func TestLoginAndLogout(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Errorf("failed to open sqlmock database: %v \n", err)
+		t.Fatalf("failed to open sqlmock database: %v \n", err)
 	}
 	defer db.Close()
 
 	controller, err := NewController()
 	if err != nil {
-		t.Errorf("Failed to initialize new controller: %v \n", err)
+		t.Fatalf("Failed to initialize new controller: %v \n", err)
 	}
 	//overwrite db connection with mock
 	controller.PSQL.DB = db
