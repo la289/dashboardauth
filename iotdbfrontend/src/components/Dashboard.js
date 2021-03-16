@@ -28,7 +28,6 @@ const Dashboard = () => {
             }
         }
         catch (e) {
-            console.log(e)
             alert("Error: Server Unavailable. Please try again")
         }
         //this is placed outside of the try/catch so that errors force the user to reauthenticate

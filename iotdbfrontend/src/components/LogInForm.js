@@ -8,7 +8,7 @@ fetch(`/csrf`, {
     method: 'GET',
     credentials: "same-origin"
 })
-    .catch(console.log)
+    .catch(alert("Error: Server Unavailable. Please reload"))
 
 
 const LogInForm = ({ setLoggedIn }) => {
@@ -37,8 +37,7 @@ const LogInForm = ({ setLoggedIn }) => {
             }
         }
         catch (e) {
-            console.log(e)
-            alert("Server Unavailable")
+            alert("Error: Server Unavailable. Please try again")
         }
     }
 
