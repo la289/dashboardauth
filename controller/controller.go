@@ -3,6 +3,7 @@ package controller
 import (
 	"iotdashboard/dbmanager"
 	"iotdashboard/utils"
+	"time"
 )
 
 type ControllerService struct {
@@ -31,7 +32,7 @@ func (ct *ControllerService) Login(email, password string) (string, error) {
 	}
 
 	// create and return JWT
-	token, err := ct.TokenUtil.CreateJWT(60)
+	token, err := ct.TokenUtil.CreateJWT(time.Second * 60)
 	if err != nil {
 		return "", err
 	}

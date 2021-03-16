@@ -30,7 +30,7 @@ func TestCreateAndGetJWTExpiry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Not able to create TokenUtil: %v \n", err)
 	}
-	token, err := tu.CreateJWT(2)
+	token, err := tu.CreateJWT(time.Second * 1)
 	if err != nil {
 		t.Errorf("JWT creation failed: %s", err)
 	}
@@ -58,7 +58,7 @@ func TestCreateAndBlocklistJWT(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Not able to create TokenUtil: %v \n", err)
 	}
-	token, err := tu.CreateJWT(60)
+	token, err := tu.CreateJWT(time.Second * 60)
 	if err != nil {
 		t.Errorf("JWT creation failed: %s", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
@@ -91,12 +92,12 @@ func TestLogoutHandler(t *testing.T) {
 		t.Fatalf("Could not initialize router: %v \n", err)
 	}
 
-	token1, err := router.Ctrlr.TokenUtil.CreateJWT(15)
+	token1, err := router.Ctrlr.TokenUtil.CreateJWT(time.Second * 15)
 	if err != nil {
 		t.Fatalf("Failed to generate a token. Error: \n %v \n", err)
 	}
 
-	token2, err := router.Ctrlr.TokenUtil.CreateJWT(15)
+	token2, err := router.Ctrlr.TokenUtil.CreateJWT(time.Second * 15)
 	if err != nil {
 		t.Fatalf("Failed to generate a token. Error: \n %v \n", err)
 	}

@@ -29,11 +29,10 @@ func NewTokenUtil() (*TokenUtil, error) {
 func (tu *TokenUtil) CreateJWT(validPeriod time.Duration) (string, error) {
 	claims := jwt.StandardClaims{
 		// In JWT, the expiry time is expressed as unix time
-		ExpiresAt: time.Now().UTC().Add(time.Second * validPeriod).Unix(),
+		ExpiresAt: time.Now().UTC().Add(validPeriod).Unix(),
 		Issuer:    "iot-dash",
 		NotBefore: time.Now().UTC().Add(time.Second * -10).Unix(),
 	}
-
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
 
 	// Sign and get the complete encoded token as a string
