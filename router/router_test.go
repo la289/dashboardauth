@@ -33,6 +33,7 @@ func TestLoginHandler(t *testing.T) {
 		{"POST", "/login", "user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "1234", "123", http.StatusUnauthorized},
 		{"POST", "/login?1231", "user@gmail.com", "s3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "123", "123", http.StatusUnauthorized},
 		{"GET", "/login", "user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "123", "123", http.StatusMethodNotAllowed},
+		{"GET", "/login", "user@gmail.com", "S3cure3Pa$$", "$2a$10$cRmL5Rtm0bunl1uqYAP.8OfJE36RUkvMcX3.v0kJyY2JBhalX4KEG", "", "", http.StatusMethodNotAllowed},
 	}
 
 	for _, c := range cases {
@@ -49,7 +50,9 @@ func TestLoginHandler(t *testing.T) {
 		if err != nil {
 			t.Errorf("Failed to make %v request %v", c.method, err)
 		}
-		req.AddCookie(&http.Cookie{Name: "CSRF", Value: c.csrfC})
+		if c.csrfC != "" {
+			req.AddCookie(&http.Cookie{Name: "CSRF", Value: c.csrfC})
+		}
 
 		//Record test request through Login Handler
 		rr := httptest.NewRecorder()

@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"errors"
 	"iotdashboard/controller"
 	"log"
 	"net"
@@ -76,7 +77,12 @@ func (rtr *RouterService) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// CSRF Validation
-	rtr.validateCSRF(w, r, creds)
+	// CSRF Validation
+	err = rtr.validateCSRF(w, r, creds)
+	if err != nil {
+		log.Printf("CSRF Validation err: %v", err)
+		return
+	}
 	log.Printf("CSRF Validated")
 
 	//Perform Login
@@ -116,7 +122,12 @@ func (rtr *RouterService) logoutHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// CSRF Validation
-	rtr.validateCSRF(w, r, creds)
+	err = rtr.validateCSRF(w, r, creds)
+	if err != nil {
+		log.Printf("CSRF Validation err: %v", err)
+		return
+	}
+	log.Printf("CSRF Validated")
 
 	jwtCookie, err := r.Cookie("JWT")
 	if err != nil {
@@ -127,12 +138,14 @@ func (rtr *RouterService) logoutHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
+	log.Printf("JWT Validated")
 
 	err = rtr.Ctrlr.Logout(jwtCookie.Value)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	log.Printf("Logged Out")
 }
 
 func (rtr *RouterService) csrfHandler(w http.ResponseWriter, r *http.Request) {
@@ -177,18 +190,22 @@ func (rtr *RouterService) redirectTLS(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO: turn this into middleware:
-func (rtr *RouterService) validateCSRF(w http.ResponseWriter, r *http.Request, creds Credentials) {
+func (rtr *RouterService) validateCSRF(w http.ResponseWriter, r *http.Request, creds Credentials) error {
 	csrfCookie, err := r.Cookie("CSRF")
 	if err != nil {
 		if err == http.ErrNoCookie {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return errors.New("Missing CSRF cookie")
 		}
 		log.Printf("ValidateCSRF Error: %v /n", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return err
 	}
 	if csrfCookie.Value != creds.CSRF {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return errors.New("CSRF Validation Failed")
 	}
+	return nil
 }
 
 //TODO: turn this into middleware:
