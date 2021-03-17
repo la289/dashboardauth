@@ -2,13 +2,7 @@ import React, { useState } from 'react';
 import LogInButton from './LogInButton.js';
 import FormTextField from './FormTextField.js';
 import Cookies from 'js-cookie';
-
-
-fetch(`/csrf`, {
-    method: 'GET',
-    credentials: "same-origin"
-})
-    .catch(alert("Error: Server Unavailable. Please reload"))
+import { authState } from '../constants.js';
 
 
 const LogInForm = ({ setLoggedIn }) => {
@@ -30,7 +24,7 @@ const LogInForm = ({ setLoggedIn }) => {
             if (response.status == 200) {
                 setLoggedIn(true);
                 //need new cookie since JWT is httponly
-                Cookies.set('logged_in', 'true')
+                Cookies.set(authState.LOGGED_IN, 'true')
 
             } else {
                 response.text().then(text => alert(text));

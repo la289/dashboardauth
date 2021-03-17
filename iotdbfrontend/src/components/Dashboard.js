@@ -1,16 +1,11 @@
 import React, { useState } from 'react';
 import LogInForm from './LogInForm';
-import LogOutButton from './LogOutButton'
+import LogOutButton from './LogOutButton';
 import Cookies from 'js-cookie';
-
+import { authState } from '../constants.js';
 
 const Dashboard = () => {
-    var jwtExists = false
-    console.log(Cookies.get('logged_in'))
-    if (Cookies.get('logged_in') == 'true') {
-        jwtExists = true
-    }
-    const [loggedIn, setLoggedIn] = useState(jwtExists)
+    const [loggedIn, setLoggedIn] = useState(Cookies.get('logged_in') == 'true')
 
     const handleLogout = async (event) => {
         // Added preventDetfault to stop the page from reloading before the response returns
@@ -32,7 +27,7 @@ const Dashboard = () => {
         }
         //this is placed outside of the try/catch so that errors force the user to reauthenticate
         Cookies.remove('JWT')
-        Cookies.remove('logged_in')
+        Cookies.remove(authState.LOGGED_IN)
         setLoggedIn(false)
     }
 
