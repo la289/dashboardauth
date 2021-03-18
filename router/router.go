@@ -50,7 +50,7 @@ func (rtr *RouterService) Start() error {
 
 func (rtr *RouterService) handleRequests(certPath, keyPath string) error {
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir("iotdbfrontend/build/")))
+	mux.Handle("/", http.FileServer(http.Dir("iotdashboard/iotdbfrontend/build/")))
 	mux.HandleFunc("/login", rtr.loginHandler)
 	mux.HandleFunc("/logout", rtr.logoutHandler)
 	mux.HandleFunc("/csrf", rtr.csrfHandler)
@@ -146,7 +146,6 @@ func (rtr *RouterService) logoutHandler(w http.ResponseWriter, r *http.Request) 
 
 func (rtr *RouterService) csrfHandler(w http.ResponseWriter, r *http.Request) {
 	rtr.addHeaders(w)
-	log.Printf("Received GET/csrf request")
 	if r.Method != "GET" {
 		http.Error(w, "Method not supported", http.StatusMethodNotAllowed)
 		return
