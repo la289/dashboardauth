@@ -1,6 +1,6 @@
 # dashboardauth
 
-Authentication system for a generic Internet of Things Dashboard.
+Authentication system for a generic Internet of Things Dashboard. Find the [design doc here.](https://docs.google.com/document/d/1nAq6-nYkSIRLabqnuwViimCAHJDCA0GqEW67P-UiqoE/edit?usp=sharing)
 
  ## Using
 Once the server is running, you can navigate to `http://your_ip_address:8080` or `https://your_ip_address:9090` in order to login.
