@@ -12,7 +12,7 @@ type ControllerService struct {
 }
 
 func NewController() (*ControllerService, error) {
-	psql, err := dbmanager.New("postgres", "myPassword", "iot_dashboard")
+	psql, err := dbmanager.New("postgres", "postgres", "iot_dashboard")
 	if err != nil {
 		return &ControllerService{}, err
 	}

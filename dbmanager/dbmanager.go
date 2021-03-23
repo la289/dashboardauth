@@ -58,7 +58,7 @@ func (db *DBManager) AddNewUser(email, password string) error {
 
 //ConnectToPSQL returns an error if the connection to the DB is not successful
 func (db *DBManager) connectToPSQL() error {
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
+	dbinfo := fmt.Sprintf("host=db port=5432 user=%s password=%s dbname=%s sslmode=disable",
 		db.dbUser, db.dbPass, db.dbName)
 	psql, err := sql.Open("postgres", dbinfo)
 
